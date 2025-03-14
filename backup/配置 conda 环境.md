@@ -27,6 +27,7 @@ pip install -r requirements.txt
 如果 PowerShell 可以正常识别 conda 命令，但 VSCode 的终端无法识别，可能是由于 VSCode 的终端没有加载正确的环境变量。
 重启 VSCode即可。
 
+
 ### 创建虚拟环境的全流程
 ```
 conda create -n abag python=3.8 -y  # 创建虚拟环境
