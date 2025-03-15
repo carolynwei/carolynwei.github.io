@@ -1,5 +1,32 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0"><channel><title>Wei_jc's Blog</title><link>https://carolynwei.github.io</link><description>Anything interesting and worth noting will be documented!</description><copyright>Wei_jc's Blog</copyright><docs>http://www.rssboard.org/rss-specification</docs><generator>python-feedgen</generator><image><url>https://avatars.githubusercontent.com/u/142194912?s=400&amp;u=4e5006ad422aa3d5c4aa111fe6e1661b48cdb0d3&amp;v=4</url><title>avatar</title><link>https://carolynwei.github.io</link></image><lastBuildDate>Fri, 14 Mar 2025 04:55:16 +0000</lastBuildDate><managingEditor>Wei_jc's Blog</managingEditor><ttl>60</ttl><webMaster>Wei_jc's Blog</webMaster><item><title>配置 conda 环境</title><link>https://carolynwei.github.io/post/pei-zhi-%20conda%20-huan-jing.html</link><description>### 要避免 conda 和 pip 混用导致的版本冲突
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0"><channel><title>Wei_jc's Blog</title><link>https://carolynwei.github.io</link><description>Anything interesting and worth noting will be documented!</description><copyright>Wei_jc's Blog</copyright><docs>http://www.rssboard.org/rss-specification</docs><generator>python-feedgen</generator><image><url>https://avatars.githubusercontent.com/u/142194912?s=400&amp;u=4e5006ad422aa3d5c4aa111fe6e1661b48cdb0d3&amp;v=4</url><title>avatar</title><link>https://carolynwei.github.io</link></image><lastBuildDate>Sat, 15 Mar 2025 16:18:58 +0000</lastBuildDate><managingEditor>Wei_jc's Blog</managingEditor><ttl>60</ttl><webMaster>Wei_jc's Blog</webMaster><item><title>修改fptrans代码</title><link>https://carolynwei.github.io/post/xiu-gai-fptrans-dai-ma.html</link><description>### 对比之下，发现可能不需要调整 support_masks 的尺寸，使其与 support_imgs 的尺寸匹配
+```
+support_masks = torch.stack(support_masks)
+# support_masks_tmp = []
+# for smask in support_masks:
+#     smask = F.interpolate(smask.unsqueeze(0).unsqueeze(0).float(), support_imgs.size()[-2:],
+#                           mode='nearest').squeeze()
+#     support_masks_tmp.append(smask)
+# support_masks = torch.stack(support_masks_tmp)
+```
+当然，这个并不影响最终实验结果
+
+### self.length_data_list 对于不一样的数据集取不一样的值，但是 600 真的是 isic 数据集的长度(2596)吗？这样读取数据集会不会导致数据集没有使用完？
+据说不用完所有数据，对结果影响不大
+
+### 将sample_tasks里面的class_sample改为class_sample+1
+
+```
+def sample_tasks(self):
+    ......
+    for idx in range(total_length):
+        class_id = idx % len(self.class_ids)
+        class_sample = self.categories[class_id]
+        ......
+        self.tasks.append((query_name, support_names, class_id + 1))
+```
+
+**class_id + 1** 是为了让类别索引从 1 开始，而不是 0。</description><guid isPermaLink="true">https://carolynwei.github.io/post/xiu-gai-fptrans-dai-ma.html</guid><pubDate>Sat, 15 Mar 2025 05:14:29 +0000</pubDate></item><item><title>配置 conda 环境</title><link>https://carolynwei.github.io/post/pei-zhi-%20conda%20-huan-jing.html</link><description>### 要避免 conda 和 pip 混用导致的版本冲突
 
 #### pip 和 conda 管理包的方式不同
 
