@@ -4,7 +4,13 @@ on:
   workflow_dispatch:
 
   issues:
-    types: [opened, edited, labeled, unlabeled]
+    types:
+      - opened
+      - edited
+      - labeled
+      - unlabeled
+      - closed
+      - reopened
 
   schedule:
     - cron: "0 16 * * *"
@@ -16,40 +22,45 @@ jobs:
 
     if: ${{ github.event.repository.owner.id == github.event.sender.id || github.event_name == 'schedule' }}
 
-    permissions: write-all
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+      issues: read
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v4
 
-      - name: Get config.json
+      - name: Check config.json
         run: |
-          echo "====== check config.json file ======"
+          echo "====== check config.json ======"
           cat config.json
-          echo "====== check config.json end ======"
+          echo "====== config.json end ======"
+
           sudo apt-get update
           sudo apt-get install -y jq
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
-      - name: Clone source code
+      - name: Clone Gmeek source code
         run: |
           GMEEK_VERSION=$(jq -r ".GMEEK_VERSION" config.json)
 
           git clone https://github.com/Meekdai/Gmeek.git /opt/Gmeek
 
-          cd /opt/Gmeek/
+          cd /opt/Gmeek
 
-          lastTag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          lastTag=$(git describe --tags "$(git rev-list --tags --max-count=1)")
 
-          if [ "$GMEEK_VERSION" == "last" ]; then
+          if [ "$GMEEK_VERSION" = "last" ]; then
             git checkout "$lastTag"
           else
             git checkout "$GMEEK_VERSION"
@@ -57,59 +68,54 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r /opt/Gmeek/requirements.txt
 
-      - name: Generate new html
+      - name: Generate blog
         run: |
+          echo "====== Copy blog config to Gmeek ======"
+
           cp -r ./* /opt/Gmeek/
-          cd /opt/Gmeek/
-      
-          mkdir -p backup
-      
-          echo "====== Debug info ======"
+
+          cd /opt/Gmeek
+
+          echo "====== Build information ======"
           echo "event_name = ${{ github.event_name }}"
           echo "repository = ${{ github.repository }}"
-          echo "issue_number = ${{ github.event.issue.number }}"
-          echo "========================"
-      
-          if [ "${{ github.event_name }}" = "issues" ]; then
-            ISSUE_NUMBER="${{ github.event.issue.number }}"
-      
-            if [ -z "$ISSUE_NUMBER" ]; then
-              echo "ERROR: issue number is empty"
-              exit 1
-            fi
-      
-            python Gmeek.py \
-              "${{ secrets.GITHUB_TOKEN }}" \
-              "${{ github.repository }}" \
-              --issue_number "$ISSUE_NUMBER"
-          else
-            python Gmeek.py \
-              "${{ secrets.GITHUB_TOKEN }}" \
-              "${{ github.repository }}"
-          fi
-      
+          echo "================================="
+
+          # Always rebuild the whole blog.
+          # Gmeek runAll() cleans old generated files first,
+          # then regenerates posts from currently available issues.
+          python Gmeek.py \
+            "${{ secrets.GITHUB_TOKEN }}" \
+            "${{ github.repository }}"
+
+          echo "====== Copy generated files back ======"
+
+          rm -rf "${{ github.workspace }}/docs"
+          rm -rf "${{ github.workspace }}/backup"
+
           cp -a /opt/Gmeek/docs "${{ github.workspace }}"
           cp -a /opt/Gmeek/backup "${{ github.workspace }}"
           cp /opt/Gmeek/blogBase.json "${{ github.workspace }}"
 
-      - name: Update html
+      - name: Commit generated files
         run: |
           git config --local user.email "$(jq -r ".email" config.json)"
           git config --local user.name "${{ github.repository_owner }}"
 
           git add .
 
-          git commit -m "🎉 auto update by Gmeek action" || echo "nothing to commit"
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+          else
+            git commit -m "🎉 auto update by Gmeek action"
+            git push
+          fi
 
-          git push || echo "nothing to push"
-
-          sleep 3
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
         with:
           path: 'docs/.'
 
@@ -120,7 +126,6 @@ jobs:
     needs: build
 
     permissions:
-      contents: write
       pages: write
       id-token: write
 
