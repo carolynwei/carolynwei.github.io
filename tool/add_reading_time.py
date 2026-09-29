@@ -1,84 +1,230 @@
 import json
 import math
-import re
+import sys
 from pathlib import Path
 
 
-BLOG_BASE = Path("blogBase.json")
-DOCS_DIR = Path("docs")
+# ============================================================
+# 读取 Gmeek 根目录
+#
+# workflow 中会这样调用：
+#
+# python tool/add_reading_time.py /opt/Gmeek
+#
+# 所以 ROOT = /opt/Gmeek
+# ============================================================
 
+ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(".")
 
-# 中文技术博客按约 300 字 / 分钟估算
+BLOG_BASE = ROOT / "blogBase.json"
+
+# 中文技术文章阅读速度
 CHARS_PER_MINUTE = 300
 
 
 def get_reading_time(word_count):
-    return max(1, math.ceil(word_count / CHARS_PER_MINUTE))
+    """
+    根据文章字数估算阅读时间。
+    至少显示 1 分钟。
+    """
+    return max(
+        1,
+        math.ceil(word_count / CHARS_PER_MINUTE)
+    )
+
+
+# ============================================================
+# 读取 blogBase.json
+# ============================================================
+
+print(f"Reading blogBase.json from: {BLOG_BASE}")
+
+if not BLOG_BASE.exists():
+    raise FileNotFoundError(
+        f"blogBase.json not found: {BLOG_BASE}"
+    )
 
 
 with BLOG_BASE.open("r", encoding="utf-8") as f:
     blog_data = json.load(f)
 
 
-for key, post in blog_data.items():
+# ============================================================
+# 重点：
+#
+# Gmeek 的文章不是：
+#
+# {
+#   "P1": {...}
+# }
+#
+# 而是：
+#
+# {
+#   "postListJson": {
+#       "P1": {...},
+#       "P2": {...}
+#   }
+# }
+#
+# ============================================================
 
-    # Gmeek 的文章通常是 P1、P2、P3...
-    if not key.startswith("P"):
-        continue
+posts = blog_data.get("postListJson", {})
+
+print(f"Found {len(posts)} posts")
+
+
+# ============================================================
+# 逐篇处理
+# ============================================================
+
+processed = 0
+
+
+for key, post in posts.items():
 
     html_dir = post.get("htmlDir")
-    word_count = post.get("wordCount")
+    word_count = post.get("wordCount", 0)
+    post_title = post.get("postTitle", key)
 
-    if not html_dir or word_count is None:
+    if not html_dir:
+        print(f"Skip {key}: no htmlDir")
         continue
 
-    html_path = Path(html_dir)
+    # htmlDir 例如：
+    #
+    # docs/post/xxx.html
+    #
+    # ROOT 是 /opt/Gmeek
+    #
+    # 最终得到：
+    #
+    # /opt/Gmeek/docs/post/xxx.html
+
+    html_path = ROOT / html_dir
 
     if not html_path.exists():
-        print(f"Skip: {html_path} does not exist")
+        print(
+            f"Skip {key}: HTML does not exist: "
+            f"{html_path}"
+        )
         continue
+
+
+    # ========================================================
+    # 计算阅读时间
+    # ========================================================
 
     reading_time = get_reading_time(word_count)
 
-    html = html_path.read_text(encoding="utf-8")
-
-    badge = (
-        f'<span class="reading-time">'
-        f'⏱ 约 {reading_time} 分钟'
-        f'</span>'
+    print(
+        f"Processing: {post_title} | "
+        f"{word_count} chars | "
+        f"{reading_time} min"
     )
 
-    # 防止 Action 重复运行时反复插入
+
+    # ========================================================
+    # 读取 HTML
+    # ========================================================
+
+    html = html_path.read_text(encoding="utf-8")
+
+
+    # ========================================================
+    # 防止重复插入
+    #
+    # 如果之前已经插入过，就先删除旧版本。
+    # ========================================================
+
+    import re
+
     html = re.sub(
-        r'<span class="reading-time">.*?</span>',
-        '',
+        r'\s*<!-- reading-time-start -->.*?'
+        r'<!-- reading-time-end -->\s*',
+        '\n',
         html,
         flags=re.DOTALL
     )
 
-    # 找文章标题 </h1>，直接插在标题下面
-    pattern = r'(</h1>)'
 
-    replacement = (
-        r'\1'
-        '\n'
-        f'<div class="reading-time-wrapper">{badge}</div>'
-    )
+    # ========================================================
+    # 阅读时间 HTML
+    #
+    # 使用 inline style，
+    # 不依赖 config.json 额外 CSS。
+    # ========================================================
 
-    new_html, count = re.subn(
-        pattern,
-        replacement,
-        html,
-        count=1
-    )
+    reading_html = f"""
+<!-- reading-time-start -->
+<div
+    class="reading-time"
+    style="
+        margin: -6px 0 22px 0;
+        font-size: 14px;
+        color: var(--color-fg-muted);
+        opacity: 0.85;
+    "
+>
+    ⏱ 约 {reading_time} 分钟读完
+</div>
+<!-- reading-time-end -->
+"""
 
-    if count == 0:
-        print(f"Warning: cannot find h1 in {html_path}")
+
+    # ========================================================
+    # 插到正文开始之前
+    #
+    # Gmeek HTML 当前结构：
+    #
+    # </div>   <- header
+    #
+    # <div id="content">
+    #
+    # 所以直接在 content 前插入最稳定。
+    # ========================================================
+
+    marker = '<div id="content">'
+
+
+    if marker not in html:
+        print(
+            f"Warning: cannot find content marker in "
+            f"{html_path}"
+        )
         continue
 
-    html_path.write_text(new_html, encoding="utf-8")
+
+    html = html.replace(
+        marker,
+        reading_html + "\n" + marker,
+        1
+    )
+
+
+    # ========================================================
+    # 保存 HTML
+    # ========================================================
+
+    html_path.write_text(
+        html,
+        encoding="utf-8"
+    )
+
+    processed += 1
 
     print(
-        f"{html_path}: "
-        f"{word_count} chars -> {reading_time} min"
+        f"✓ Added reading time: "
+        f"{reading_time} min -> {html_path}"
     )
+
+
+# ============================================================
+# 最终结果
+# ============================================================
+
+print()
+print("========================================")
+print(f"Reading time processing finished.")
+print(f"Processed posts: {processed}/{len(posts)}")
+print("========================================")
