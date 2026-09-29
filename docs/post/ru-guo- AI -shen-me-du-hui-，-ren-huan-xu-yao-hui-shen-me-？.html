@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html data-color-mode="light" data-dark-theme="dark" data-light-theme="light" lang="zh-CN">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
+    
+    <link rel="icon" href="https://avatars.githubusercontent.com/u/142194912?s=400&u=4e5006ad422aa3d5c4aa111fe6e1661b48cdb0d3&v=4"><script>
+        let theme = localStorage.getItem("meek_theme") || "light";
+        document.documentElement.setAttribute("data-color-mode", theme);
+    </script>
+<meta name="description" content="关于 AI，最常见的问题是：
+
+> **AI 会不会取代人？**
+
+但这个问题其实太粗了。">
+<meta property="og:title" content="如果 AI 什么都会，人还需要会什么？">
+<meta property="og:description" content="关于 AI，最常见的问题是：
+
+> **AI 会不会取代人？**
+
+但这个问题其实太粗了。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://carolynwei.github.io/post/ru-guo-%20AI%20-shen-me-du-hui-%EF%BC%8C-ren-huan-xu-yao-hui-shen-me-%EF%BC%9F.html">
+<meta property="og:image" content="https://avatars.githubusercontent.com/u/142194912?s=400&u=4e5006ad422aa3d5c4aa111fe6e1661b48cdb0d3&v=4">
+<title>如果 AI 什么都会，人还需要会什么？</title>
+
+
+
+</head>
+<style>
+body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;padding: 45px;font-size: 16px;font-family: sans-serif;line-height: 1.25;}
+#header{display:flex;padding-bottom:8px;border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted));margin-bottom: 16px;}
+#footer {margin-top:64px; text-align: center;font-size: small;}
+
+</style>
+
+<style>
+.postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
+.title-right{display:flex;margin:auto 0 0 auto;}
+.title-right .circle{padding: 14px 16px;margin-right:8px;}
+#postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
+#postBody hr{height:2px;}
+#cmButton{height:48px;margin-top:48px;}
+#comments{margin-top:64px;}
+.g-emoji{font-size:24px;}
+@media (max-width: 600px) {
+    body {padding: 8px;}
+    .postTitle{font-size:24px;}
+}
+
+</style>
+
+
+
+
+<body>
+    <div id="header">
+<h1 class="postTitle">如果 AI 什么都会，人还需要会什么？</h1>
+<div class="title-right">
+    <a href="https://carolynwei.github.io" id="buttonHome" class="btn btn-invisible circle" title="首页">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathHome" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+    <a href="https://github.com/carolynwei/carolynwei.github.io/issues/7" target="_blank" class="btn btn-invisible circle" title="Issue">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathIssue" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+
+    <a class="btn btn-invisible circle" onclick="modeSwitch();" title="切换主题">
+        <svg class="octicon" width="16" height="16" >
+            <path id="themeSwitch" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+
+</div>
+</div>
+    <div id="content">
+<div class="markdown-body" id="postBody"><p>关于 AI，最常见的问题是：</p>
+<blockquote>
+<p><strong>AI 会不会取代人？</strong></p>
+</blockquote>
+<p>但这个问题其实太粗了。</p>
+<p>更准确的问题应该是：</p>
+<blockquote>
+<p><strong>AI 会取代哪些任务？又会在哪些地方增强人的能力？</strong></p>
+</blockquote>
+<p>因为 AI 对人的影响，并不只有“替代”这一种。</p>
+<p>可以粗略写成：</p>
+<p>$$
+\text{Substitution}
++
+\text{Augmentation}
++
+\text{New Tasks}
++
+\text{Workflow Redesign}
+$$</p>
+<p>真正发生变化的，往往不是整个职业消失，而是职业内部的任务重新分配。</p>
+<h1>1. 自动化和增强，不是一回事</h1>
+<p>先区分三个概念。</p>
+<h2>Automation：AI 自己干</h2>
+<p>原来：</p>
+<p>$$
+Human \rightarrow Task \rightarrow Output
+$$</p>
+<p>后来：</p>
+<p>$$
+AI \rightarrow Task \rightarrow Output
+$$</p>
+<p>比如 OCR、语音转录、简单翻译、重复的数据整理。</p>
+<p>这是真正的“替代”。</p>
+<h2>Augmentation：AI 帮人干得更好</h2>
+<p>如果人的表现是：</p>
+<p>$$
+P(H)
+$$</p>
+<p>用了 AI 后：</p>
+<p>$$
+P(H+A)&gt;P(H)
+$$</p>
+<p>那就是增强。</p>
+<p>比如程序员用 Copilot 写代码，医生用 AI 辅助检索，研究者用 AI 整理论文。</p>
+<h2>Complementarity：人机组合超过双方单独工作</h2>
+<p>更严格的情况是：</p>
+<p>$$
+P(H+A)&gt;\max(P(H),P(A))
+$$</p>
+<p>这才是真正的“1+1&gt;2”。</p>
+<p>但现实中，这种效果并没有想象中普遍。</p>
+<p>不少研究发现，人和 AI 合作虽然经常比人单独工作更好，却未必比单独的 AI 更强。</p>
+<p>所以：</p>
+<p>$$
+Human+AI \not\Rightarrow Better
+$$</p>
+<h1>2. 人和 AI 为什么可能互补？</h1>
+<p>关键不是“谁更聪明”，而是：</p>
+<blockquote>
+<p><strong>人和 AI 擅长的东西不同，犯的错误也不同。</strong></p>
+</blockquote>
+<p>AI 更擅长：</p>
+<ul>
+<li>大规模信息处理；</li>
+<li>检索；</li>
+<li>模式识别；</li>
+<li>重复执行；</li>
+<li>快速生成候选方案。</li>
+</ul>
+<p>人更擅长：</p>
+<ul>
+<li>理解复杂语境；</li>
+<li>决定目标；</li>
+<li>处理价值冲突；</li>
+<li>面对异常情况；</li>
+<li>对结果负责。</li>
+</ul>
+<p>所以真正有价值的组合是：</p>
+<p>$$
+AI=\text{Search + Scale + Pattern}
+$$</p>
+<p>$$
+Human=\text{Goal + Context + Judgement}
+$$</p>
+<p>如果两者永远在同一个地方犯错，就没有什么互补价值。</p>
+<p>真正重要的是：</p>
+<p>$$
+E_H \neq E_A
+$$</p>
+<h1>3. AI 怎么帮助人？</h1>
+<p>我觉得可以归纳成四类。</p>
+<h2>3.1 把人从低价值杂活里解放出来</h2>
+<p>人的认知资源有限：</p>
+<p>$$
+C_{\text{routine}}
++
+C_{\text{reasoning}}
+$$</p>
+<p>如果 AI 能减少：</p>
+<p>$$
+C_{\text{routine}}
+$$</p>
+<p>就可以让更多精力留给真正需要判断的工作。</p>
+<p>比如：</p>
+<ul>
+<li>查资料；</li>
+<li>改格式；</li>
+<li>写模板代码；</li>
+<li>整理会议记录；</li>
+<li>总结文档。</li>
+</ul>
+<p>AI 最大的价值之一，不一定是“替你思考”，而是：</p>
+<blockquote>
+<p><strong>少让你把脑子浪费在不值得思考的地方。</strong></p>
+</blockquote>
+<h2>3.2 把专家变得更高效</h2>
+<p>医生、律师、程序员、研究者都有一个共同问题：</p>
+<blockquote>
+<p>信息太多，人处理不过来。</p>
+</blockquote>
+<p>AI 很适合做：</p>
+<p>$$
+\text{大量信息}
+\rightarrow
+\text{候选信息}
+$$</p>
+<p>然后由人判断。</p>
+<p>例如程序员不再把大量时间花在查 API、写 boilerplate code 上，而是更多处理：</p>
+<p>$$
+\text{Problem Definition}
++
+\text{Architecture}
++
+\text{Verification}
+$$</p>
+<p>AI 越会“生成”，人的价值就越向“判断”迁移。</p>
+<h2>3.3 把专家经验扩散给普通人</h2>
+<p>这一点可能更加重要。</p>
+<p>一项针对 5000 多名客服人员的研究发现，生成式 AI 能提高整体工作效率，而提升最大的是经验较少、能力较弱的员工。</p>
+<p>原因很直观：</p>
+<p>$$
+\text{Expert Knowledge}
+\xrightarrow{AI}
+\text{Scalable Guidance}
+$$</p>
+<p>以前新人要坐在高手旁边慢慢学。</p>
+<p>现在 AI 可以把一部分经验直接“复制”出去。</p>
+<p>所以 AI 可能不是：</p>
+<p>$$
+Expert\rightarrow Super Expert
+$$</p>
+<p>而是：</p>
+<p>$$
+Novice\rightarrow Intermediate
+$$</p>
+<h2>3.4 扩大一个人“能做什么”</h2>
+<p>这是最容易被忽略的一点。</p>
+<p>比如一个不会前端的人有一个产品想法。</p>
+<p>过去：</p>
+<p>$$
+Idea\rightarrow ?
+$$</p>
+<p>现在可能：</p>
+<p>$$
+Idea
+\xrightarrow{AI}
+Prototype
+$$</p>
+<p>类似的事情还包括：</p>
+<ul>
+<li>不会画画的人做视觉原型；</li>
+<li>不会 SQL 的人分析数据；</li>
+<li>不会外语的人跨语言交流；</li>
+<li>不会写代码的人做简单自动化。</li>
+</ul>
+<p>所以 AI 不只是：</p>
+<p>$$
+\text{Do old things faster}
+$$</p>
+<p>更可能是：</p>
+<p>$$
+\boxed{
+\text{Do things previously impossible for you}
+}
+$$</p>
+<p>这才是真正意义上的能力扩展。</p>
+<h1>4. 但 Human + AI 也可能更差</h1>
+<p>事情没有这么美好。</p>
+<p>AI 有几个典型副作用。</p>
+<h2>Automation Bias</h2>
+<p>AI 一旦给出一个看起来很专业的答案，人会降低警惕。</p>
+<p>但：</p>
+<p>$$
+\text{Fluent}
+\neq
+\text{Correct}
+$$</p>
+<h2>Anchoring</h2>
+<p>如果 AI 先给答案，人后面的判断容易被它带偏。</p>
+<p>所以：</p>
+<p>$$
+AI\rightarrow Human
+$$</p>
+<p>和：</p>
+<p>$$
+Human\rightarrow AI
+$$</p>
+<p>可能完全不同。</p>
+<p>在高风险任务里，更合理的流程可能是：</p>
+<p>$$
+Human_0
+\rightarrow
+AI
+\rightarrow
+Human_1
+$$</p>
+<p>先独立判断，再看 AI 意见。</p>
+<h2>Deskilling</h2>
+<p>短期来看：</p>
+<p>$$
+Productivity\uparrow
+$$</p>
+<p>但长期可能：</p>
+<p>$$
+Skill\downarrow
+$$</p>
+<p>比如学生每道题都直接问 AI。</p>
+<p>作业完成速度上去了，但能力未必提高。</p>
+<p>所以不能只测：</p>
+<p>$$
+Performance_{today}
+$$</p>
+<p>还要测：</p>
+<p>$$
+Skill_{future}
+$$</p>
+<h2>Homogenization</h2>
+<p>AI 还能带来一个很隐蔽的问题：</p>
+<blockquote>
+<p>所有人越来越像。</p>
+</blockquote>
+<p>如果每个人都问同一个模型：</p>
+<blockquote>
+<p>“给我一个有创意的方案。”</p>
+</blockquote>
+<p>结果可能是：</p>
+<p>$$
+Average\ Quality\uparrow
+$$</p>
+<p>但：</p>
+<p>$$
+Diversity\downarrow
+$$</p>
+<p>对普通办公未必是坏事。</p>
+<p>但对科研、艺术和创新来说，这是个真正的问题。</p>
+<h1>5. 人真正不可轻易外包的是什么？</h1>
+<p>AI 越来越强以后，人的价值不会简单消失，而会发生迁移。</p>
+<p>一些能力越来越便宜：</p>
+<p>$$
+\text{Search}
+$$</p>
+<p>$$
+\text{Drafting}
+$$</p>
+<p>$$
+\text{Basic Coding}
+$$</p>
+<p>而另一些能力反而更重要：</p>
+<h3>Problem Formulation</h3>
+<p>你到底在解决什么问题？</p>
+<h3>Verification</h3>
+<p>AI 给你的东西对不对？</p>
+<h3>Taste</h3>
+<p>十个都不错的答案，哪个真正好？</p>
+<h3>Domain Expertise</h3>
+<p>没有专业知识，你甚至不知道 AI 哪里错了。</p>
+<h3>Responsibility</h3>
+<p>最后谁做决定，谁承担后果？</p>
+<p>所以：</p>
+<p>$$
+Value(\text{Generation})\downarrow
+$$</p>
+<p>同时：</p>
+<p>$$
+Value(\text{Evaluation})\uparrow
+$$</p>
+<h1>6. 哪些任务适合自动化，哪些适合人机合作？</h1>
+<p>可以用两个维度理解：</p>
+<p>$$
+\text{AI Capability}
+$$</p>
+<p>和：</p>
+<p>$$
+\text{Need for Human Judgement}
+$$</p>
+<p>比如 OCR：</p>
+<p>AI 很强，人类判断需求又低，适合直接自动化。</p>
+<p>医疗决策则不同：</p>
+<p>AI 能力可以很强，但：</p>
+<ul>
+<li>错误成本高；</li>
+<li>情境复杂；</li>
+<li>需要解释；</li>
+<li>需要承担责任。</li>
+</ul>
+<p>因此更适合：</p>
+<p>$$
+Human+AI
+$$</p>
+<p>而不是：</p>
+<p>$$
+AI\ Only
+$$</p>
+<h1>7. 所以真正应该问什么？</h1>
+<p>以后再讨论：</p>
+<blockquote>
+<p>AI 会不会取代人？</p>
+</blockquote>
+<p>可能可以换成三个更准确的问题：</p>
+<p>$$
+\boxed{\text{What should AI do?}}
+$$</p>
+<p>$$
+\boxed{\text{What should humans do?}}
+$$</p>
+<p>以及：</p>
+<p>$$
+\boxed{\text{How should they work together?}}
+$$</p>
+<p>AI 当然会替代很多任务。</p>
+<p>但这不等于：</p>
+<blockquote>
+<p>人的价值消失。</p>
+</blockquote>
+<p>更可能发生的是：</p>
+<blockquote>
+<p><strong>人的价值从“执行”逐渐迁移到“定义、判断、验证和负责”。</strong></p>
+</blockquote>
+<p>所以一个好的 AI 系统，不应该只是让：</p>
+<p>$$
+Human\ Effort\downarrow
+$$</p>
+<p>而应该让：</p>
+<p>$$
+Human\ Capability\uparrow
+$$</p>
+<p>AI 帮助人的最好状态，不是：</p>
+<blockquote>
+<p>“这件事以后你不用会了。”</p>
+</blockquote>
+<p>而是：</p>
+<blockquote>
+<p><strong>“因为有了它，你现在能做以前做不到的事情。”</strong></p>
+</blockquote>
+<p>这大概才是从 <strong>Automation</strong> 到 <strong>Augmentation</strong> 最重要的区别。</p></div>
+<div style="font-size:small;margin-top:8px;float:right;"></div>
+
+<button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>
+<div class="comments" id="comments"></div>
+
+</div>
+    <div id="footer"><div id="footer1">Copyright © <span id="copyrightYear"></span> <a href="https://carolynwei.github.io">Wei_jc's Blog</a></div>
+<div id="footer2">
+    <span id="runday"></span><span>Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a></span>
+</div>
+
+<script>
+var now=new Date();
+document.getElementById("copyrightYear").innerHTML=now.getFullYear();
+
+if(""!=""){
+    var startSite=new Date("");
+    var diff=now.getTime()-startSite.getTime();
+    var diffDay=Math.floor(diff/(1000*60*60*24));
+    document.getElementById("runday").innerHTML="网站运行 "+diffDay+" 天"+" • ";
+}
+</script></div>
+</body>
+<script>
+var IconList={'sun': 'M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V.75A.75.75 0 018 0zm0 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM2.343 2.343a.75.75 0 011.061 0l1.06 1.061a.75.75 0 01-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zm9.193 9.193a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061l-1.061-1.06a.75.75 0 010-1.061zM16 8a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5A.75.75 0 0116 8zM3 8a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h1.5A.75.75 0 013 8zm10.657-5.657a.75.75 0 010 1.061l-1.061 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zm-9.193 9.193a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 11-1.061-1.06l1.06-1.061a.75.75 0 011.061 0z', 'moon': 'M9.598 1.591a.75.75 0 01.785-.175 7 7 0 11-8.967 8.967.75.75 0 01.961-.96 5.5 5.5 0 007.046-7.046.75.75 0 01.175-.786zm1.616 1.945a7 7 0 01-7.678 7.678 5.5 5.5 0 107.678-7.678z', 'sync': 'M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z', 'home': 'M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z', 'github': 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z'};
+var utterancesLoad=0;
+
+let themeSettings={
+    "dark": ["dark","moon","#00f0ff","dark-blue"],
+    "light": ["light","sun","#ff5000","github-light"],
+    "auto": ["auto","sync","","preferred-color-scheme"]
+};
+function changeTheme(mode, icon, color, utheme){
+    document.documentElement.setAttribute("data-color-mode",mode);
+    document.getElementById("themeSwitch").setAttribute("d",value=IconList[icon]);
+    document.getElementById("themeSwitch").parentNode.style.color=color;
+    if(utterancesLoad==1){utterancesTheme(utheme);}
+}
+function modeSwitch(){
+    let currentMode=document.documentElement.getAttribute('data-color-mode');
+    let newMode = currentMode === "light" ? "dark" : currentMode === "dark" ? "auto" : "light";
+    localStorage.setItem("meek_theme", newMode);
+    if(themeSettings[newMode]){
+        changeTheme(...themeSettings[newMode]);
+    }
+}
+function utterancesTheme(theme){
+    const message={type:'set-theme',theme: theme};
+    const iframe=document.getElementsByClassName('utterances-frame')[0];
+    iframe.contentWindow.postMessage(message,'https://utteranc.es');
+}
+if(themeSettings[theme]){changeTheme(...themeSettings[theme]);}
+console.log("\n %c Gmeek last https://github.com/Meekdai/Gmeek \n","padding:5px 0;background:#02d81d;color:#fff");
+</script>
+
+<script>
+document.getElementById("pathHome").setAttribute("d",IconList["home"]);
+document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
+
+
+
+function openComments(){
+    cm=document.getElementById("comments");
+    cmButton=document.getElementById("cmButton");
+    cmButton.disabled=true;
+    cmButton.innerHTML="loading";
+    span=document.createElement("span");
+    span.setAttribute("class","AnimatedEllipsis");
+    cmButton.appendChild(span);
+
+    script=document.createElement("script");
+    script.setAttribute("src","https://utteranc.es/client.js");
+    script.setAttribute("repo","carolynwei/carolynwei.github.io");
+    script.setAttribute("issue-term","title");
+    
+    if(localStorage.getItem("meek_theme")=="dark"){script.setAttribute("theme","dark-blue");}
+    else if(localStorage.getItem("meek_theme")=="light") {script.setAttribute("theme","github-light");}
+    else{script.setAttribute("theme","preferred-color-scheme");}
+    
+    script.setAttribute("crossorigin","anonymous");
+    script.setAttribute("async","");
+    cm.appendChild(script);
+
+    int=self.setInterval("iFrameLoading()",200);
+}
+
+function iFrameLoading(){
+    var utterances=document.getElementsByClassName('utterances');
+    if(utterances.length==1){
+        if(utterances[0].style.height!=""){
+            utterancesLoad=1;
+            int=window.clearInterval(int);
+            document.getElementById("cmButton").style.display="none";
+            console.log("utterances Load OK");
+        }
+    }
+}
+
+
+
+</script>
+<script>MathJax = {tex: {inlineMath: [["$", "$"]]}};</script><script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</html>
