@@ -1,8 +1,10 @@
 name: build Gmeek
 
 on:
+  # 手动触发：Actions -> build Gmeek -> Run workflow
   workflow_dispatch:
 
+  # Issue 有变化时自动重新构建
   issues:
     types:
       - opened
@@ -12,6 +14,8 @@ on:
       - closed
       - reopened
 
+  # 每天 UTC 16:00 自动完整重建
+  # 对应北京时间 / 台北时间 00:00
   schedule:
     - cron: "0 16 * * *"
 
@@ -20,7 +24,9 @@ jobs:
     name: Generate blog
     runs-on: ubuntu-24.04
 
-    if: ${{ github.event.repository.owner.id == github.event.sender.id || github.event_name == 'schedule' }}
+    # Issue 事件只允许仓库 owner 的操作触发构建；
+    # schedule 没有 sender，所以单独允许 schedule。
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event.repository.owner.id == github.event.sender.id }}
 
     permissions:
       contents: write
@@ -29,13 +35,22 @@ jobs:
       issues: read
 
     steps:
+      # --------------------------------------------------
+      # 1. Checkout 博客仓库
+      # --------------------------------------------------
       - name: Checkout
         uses: actions/checkout@v7
 
+      # --------------------------------------------------
+      # 2. 配置 GitHub Pages
+      # --------------------------------------------------
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v4
 
+      # --------------------------------------------------
+      # 3. 检查 config.json，并安装 jq
+      # --------------------------------------------------
       - name: Check config.json
         run: |
           echo "====== check config.json ======"
@@ -45,14 +60,24 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y jq
 
+      # --------------------------------------------------
+      # 4. Python
+      # --------------------------------------------------
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
+      # --------------------------------------------------
+      # 5. 下载指定版本 Gmeek
+      # --------------------------------------------------
       - name: Clone Gmeek source code
         run: |
           GMEEK_VERSION=$(jq -r ".GMEEK_VERSION" config.json)
+
+          echo "====== Gmeek version ======"
+          echo "$GMEEK_VERSION"
+          echo "==========================="
 
           git clone https://github.com/Meekdai/Gmeek.git /opt/Gmeek
 
@@ -60,17 +85,25 @@ jobs:
 
           lastTag=$(git describe --tags "$(git rev-list --tags --max-count=1)")
 
+          echo "Latest tag: $lastTag"
+
           if [ "$GMEEK_VERSION" = "last" ]; then
             git checkout "$lastTag"
           else
             git checkout "$GMEEK_VERSION"
           fi
 
+      # --------------------------------------------------
+      # 6. 安装 Gmeek 依赖
+      # --------------------------------------------------
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r /opt/Gmeek/requirements.txt
 
+      # --------------------------------------------------
+      # 7. 完整生成博客
+      # --------------------------------------------------
       - name: Generate blog
         run: |
           echo "====== Copy blog config to Gmeek ======"
@@ -84,12 +117,33 @@ jobs:
           echo "repository = ${{ github.repository }}"
           echo "================================="
 
-          # Always rebuild the whole blog.
-          # Gmeek runAll() cleans old generated files first,
-          # then regenerates posts from currently available issues.
+          # ------------------------------------------------
+          # IMPORTANT:
+          #
+          # 必须显式传：
+          #
+          #   --issue_number 0
+          #
+          # Gmeek.py 当前默认值是整数 0，
+          # 但内部与字符串 "0" 比较。
+          #
+          # 如果完全省略这个参数：
+          #
+          #   0 != "0"
+          #
+          # Gmeek 会错误执行 runOne(0)，
+          # 最后访问 GitHub Issue #0，
+          # 导致：
+          #
+          #   GithubException: 404 Not Found
+          #
+          # 显式传字符串 "0" 后才会正确进入 runAll()。
+          # ------------------------------------------------
+
           python Gmeek.py \
             "${{ secrets.GITHUB_TOKEN }}" \
-            "${{ github.repository }}"
+            "${{ github.repository }}" \
+            --issue_number 0
 
           echo "====== Copy generated files back ======"
 
@@ -100,6 +154,9 @@ jobs:
           cp -a /opt/Gmeek/backup "${{ github.workspace }}"
           cp /opt/Gmeek/blogBase.json "${{ github.workspace }}"
 
+      # --------------------------------------------------
+      # 8. 将 Gmeek 生成结果提交回仓库
+      # --------------------------------------------------
       - name: Commit generated files
         run: |
           git config --local user.email "$(jq -r ".email" config.json)"
@@ -114,10 +171,17 @@ jobs:
             git push
           fi
 
+      # --------------------------------------------------
+      # 9. 上传 GitHub Pages artifact
+      # --------------------------------------------------
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
           path: 'docs/.'
+
+  # ======================================================
+  # Deploy
+  # ======================================================
 
   deploy:
     name: Deploy blog
