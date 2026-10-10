@@ -129,23 +129,11 @@ VISTA 多问了一层：
 
 过去可能是：
 
-$$
-\text{weak model}
-+
-\text{good harness}
-=
-\text{limited agent}
-$$
+$$ \text{weak model}+\text{good harness}=\text{limited agent} $$
 
 现在更接近：
 
-$$
-\text{strong model}
-+
-\text{simple harness}
-=
-\text{strong agent}
-$$
+$$ \text{strong model}+\text{simple harness}=\text{strong agent} $$
 
 VISTA 的实验说明：
 
