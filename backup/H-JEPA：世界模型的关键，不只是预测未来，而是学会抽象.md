@@ -103,19 +103,9 @@ $$
 $$ E^{\mathrm{high}}(\hat z^{\mathrm{low}})
 $$
 
-
 再优化具体动作：
 
-$$
-a_{\mathrm{low}}^*
-=
-\arg\min_a
-\left\lVert
-E^{\mathrm{high}}\bigl(\hat z^{\mathrm{low}}(a)\bigr)
--
-g^{\mathrm{high}}
-\right\rVert^2
-$$
+$$a_{\mathrm{low}}^{*} = \arg\min_{a} \|E^{\mathrm{high}}(\hat{z}^{\mathrm{low}}(a)) - g^{\mathrm{high}}\|^{2}$$
 
 这实现了：
 
