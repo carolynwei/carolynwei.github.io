@@ -175,9 +175,7 @@ $$</p>
 <p>$$ E^{\mathrm{high}}(\hat z^{\mathrm{low}})
 $$</p>
 <p>再优化具体动作：</p>
-<p>$$ g^{\mathrm{high}}
-\right|^2
-$$</p>
+<p>$$ g^{\mathrm{high}} \right|^2 $$</p>
 <p>这实现了：</p>
 <p>$$
 \text{长期目标}
@@ -257,7 +255,8 @@ $$</p>
 <p>而不同场景具有不同背景，因此整个数据集的表示仍然可以非常丰富，不一定违反 SIGReg 的分布约束。</p>
 <p><strong>模型没有发生传统意义上的常量坍塌，却学到了与控制无关的表示。</strong></p>
 <p>为此，论文引入逆动力学损失：</p>
-<p>|I(z_t,z_{t+1})-a_t|^2<br>
+<p>$$
+|I(z_t,z_{t+1})-a_t|^2
 $$</p>
 <p>要求模型能够根据状态变化预测动作，从而鼓励 latent 保留动作相关信息。</p>
 <p>这暴露了 JEPA 世界模型的一个根本问题：</p>
@@ -314,12 +313,13 @@ $$</p>
 <li>物体碰撞：瞬时、高频，却可能决定之后的整个轨迹。</li>
 </ul>
 <p>所以一个更加理想的世界模型，不应该只根据时间尺度决定抽象，而应该同时考虑：</p>
-<p>f(<br>
-\text{Predictability},<br>
-\text{Controllability},<br>
-\text{Causal Relevance},<br>
-\text{Physical Structure}<br>
-)<br>
+<p>$$
+f(
+\text{Predictability},
+\text{Controllability},
+\text{Causal Relevance},
+\text{Physical Structure}
+)
 $$</p>
 <p>这也与 Geometric GNN 和物理动力学建模存在直接联系。</p>
 <p>例如，可以按照以下结构组织世界模型：</p>

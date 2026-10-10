@@ -105,9 +105,7 @@ $$
 
 再优化具体动作：
 
-$$ g^{\mathrm{high}}
-\right|^2
-$$
+$$ g^{\mathrm{high}} \right|^2 $$
 
 这实现了：
 
@@ -206,6 +204,7 @@ $$
 
 为此，论文引入逆动力学损失：
 
+$$ 
 |I(z_t,z_{t+1})-a_t|^2
 $$
 
@@ -255,6 +254,7 @@ H-JEPA 的基本假设是：
 
 所以一个更加理想的世界模型，不应该只根据时间尺度决定抽象，而应该同时考虑：
 
+$$ 
 f(
 \text{Predictability},
 \text{Controllability},
