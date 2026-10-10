@@ -85,7 +85,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
         opacity: 0.85;
     "
 >
-    ⏱ 约 14 分钟读完
+    ⏱ 约 15 分钟读完
 </div>
 <!-- reading-time-end -->
 
@@ -231,9 +231,7 @@ $$</p>
 <p><strong>方法二：固定 Retriever，训练 Generator</strong></p>
 <p>保持检索器不变，让生成器学会更好地理解、整合检索结果。</p>
 <p>典型的监督训练目标为：</p>
-<p>$$
--\sum_t \log p_\theta(y_t \mid x, D_K, y_{&lt;t})
-$$</p>
+$$-\sum_{t=1}^{T} \log p_{\theta}(y_t \mid x, D_K, y_{&lt;t})$$
 <p>核心思想：</p>
 <blockquote>
 <p>让生成器适应检索器，更好地利用已有证据。</p>
@@ -271,7 +269,7 @@ $$</p>
 <li><a href="https://arxiv.org/abs/2004.04906" rel="nofollow">DPR — Dense Passage Retrieval for Open-Domain Question Answering (2020)</a></li>
 <li><a href="https://arxiv.org/abs/2007.00808" rel="nofollow">ANCE — Approximate Nearest Neighbor Negative Contrastive Learning (2020)</a></li>
 <li><a href="https://arxiv.org/abs/2005.11401" rel="nofollow">RAG — Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks (2020)</a></li>
-<li>[REPLUG — Retrieval-Augmented Black-Box Language Models (2023)](</li>
+<li>[<a href="https://arxiv.org/abs/2301.12652" rel="nofollow">REPLUG — Retrieval-Augmented Black-Box Language Models (2023)</a>](<a href="https://arxiv.org/abs/2301.12652" rel="nofollow">https://arxiv.org/abs/2301.12652</a>)</li>
 </ol></div>
 <div style="font-size:small;margin-top:8px;float:right;"></div>
 

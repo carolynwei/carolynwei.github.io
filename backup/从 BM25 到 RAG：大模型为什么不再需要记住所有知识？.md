@@ -185,15 +185,18 @@ $$
 这类思路也出现在 [[REPLUG](https://arxiv.org/abs/2301.12652)](https://arxiv.org/abs/2301.12652) 等工作中。
 
 
+
+
 **方法二：固定 Retriever，训练 Generator**
 
 保持检索器不变，让生成器学会更好地理解、整合检索结果。
 
 典型的监督训练目标为：
 
-$$
--\sum_t \log p_\theta(y_t \mid x, D_K, y_{<t})
-$$
+```math
+-\sum_{t=1}^{T} \log p_{\theta}(y_t \mid x, D_K, y_{<t})
+```
+
 
 核心思想：
 
@@ -250,4 +253,4 @@ RAG 的价值并不是彻底取代参数化记忆，而是提供了一种更灵�
 1. [DPR — Dense Passage Retrieval for Open-Domain Question Answering (2020)](https://arxiv.org/abs/2004.04906)
 2. [ANCE — Approximate Nearest Neighbor Negative Contrastive Learning (2020)](https://arxiv.org/abs/2007.00808)
 3. [RAG — Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks (2020)](https://arxiv.org/abs/2005.11401)
-4. [REPLUG — Retrieval-Augmented Black-Box Language Models (2023)](
+4. [[REPLUG — Retrieval-Augmented Black-Box Language Models (2023)](https://arxiv.org/abs/2301.12652)](https://arxiv.org/abs/2301.12652)
