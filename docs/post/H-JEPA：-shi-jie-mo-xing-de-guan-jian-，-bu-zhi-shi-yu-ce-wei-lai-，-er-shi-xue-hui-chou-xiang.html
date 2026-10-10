@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html data-color-mode="light" data-dark-theme="dark" data-light-theme="light" lang="zh-CN">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
+    
+    <link rel="icon" href="https://avatars.githubusercontent.com/u/142194912?s=400&u=4e5006ad422aa3d5c4aa111fe6e1661b48cdb0d3&v=4"><script>
+        let theme = localStorage.getItem("meek_theme") || "light";
+        document.documentElement.setAttribute("data-color-mode", theme);
+    </script>
+<meta name="description" content="> **核心问题：如何让世界模型自动学习适合不同时间尺度的状态表示，并利用这些表示完成长期规划？**
+
+**论文：** H-JEPA: End-to-End Learning of Hierarchical World Models for Visual Planning（2026）
+
+**论文链接：** https://arxiv.org/abs/2610.06805
+
+## 1. 背景：为什么世界模型需要分层？
+
+世界模型（World Model）的基本思想是：给定当前状态与动作，预测未来状态。">
+<meta property="og:title" content="H-JEPA：世界模型的关键，不只是预测未来，而是学会抽象">
+<meta property="og:description" content="> **核心问题：如何让世界模型自动学习适合不同时间尺度的状态表示，并利用这些表示完成长期规划？**
+
+**论文：** H-JEPA: End-to-End Learning of Hierarchical World Models for Visual Planning（2026）
+
+**论文链接：** https://arxiv.org/abs/2610.06805
+
+## 1. 背景：为什么世界模型需要分层？
+
+世界模型（World Model）的基本思想是：给定当前状态与动作，预测未来状态。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://carolynwei.github.io/post/H-JEPA%EF%BC%9A-shi-jie-mo-xing-de-guan-jian-%EF%BC%8C-bu-zhi-shi-yu-ce-wei-lai-%EF%BC%8C-er-shi-xue-hui-chou-xiang.html">
+<meta property="og:image" content="https://avatars.githubusercontent.com/u/142194912?s=400&u=4e5006ad422aa3d5c4aa111fe6e1661b48cdb0d3&v=4">
+<title>H-JEPA：世界模型的关键，不只是预测未来，而是学会抽象</title>
+
+
+
+</head>
+<style>
+body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;padding: 45px;font-size: 16px;font-family: sans-serif;line-height: 1.25;}
+#header{display:flex;padding-bottom:8px;border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted));margin-bottom: 16px;}
+#footer {margin-top:64px; text-align: center;font-size: small;}
+
+</style>
+
+<style>
+.postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
+.title-right{display:flex;margin:auto 0 0 auto;}
+.title-right .circle{padding: 14px 16px;margin-right:8px;}
+#postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
+#postBody hr{height:2px;}
+#cmButton{height:48px;margin-top:48px;}
+#comments{margin-top:64px;}
+.g-emoji{font-size:24px;}
+@media (max-width: 600px) {
+    body {padding: 8px;}
+    .postTitle{font-size:24px;}
+}
+
+</style>
+
+
+
+
+<body>
+    <div id="header">
+<h1 class="postTitle">H-JEPA：世界模型的关键，不只是预测未来，而是学会抽象</h1>
+<div class="title-right">
+    <a href="https://carolynwei.github.io" id="buttonHome" class="btn btn-invisible circle" title="首页">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathHome" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+    <a href="https://github.com/carolynwei/carolynwei.github.io/issues/10" target="_blank" class="btn btn-invisible circle" title="Issue">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathIssue" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+
+    <a class="btn btn-invisible circle" onclick="modeSwitch();" title="切换主题">
+        <svg class="octicon" width="16" height="16" >
+            <path id="themeSwitch" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+
+</div>
+</div>
+    
+<!-- reading-time-start -->
+<div
+    class="reading-time"
+    style="
+        margin: -6px 0 22px 0;
+        font-size: 14px;
+        color: var(--color-fg-muted);
+        opacity: 0.85;
+    "
+>
+    ⏱ 约 17 分钟读完
+</div>
+<!-- reading-time-end -->
+
+<div id="content">
+<div class="markdown-body" id="postBody"><blockquote>
+<p><strong>核心问题：如何让世界模型自动学习适合不同时间尺度的状态表示，并利用这些表示完成长期规划？</strong></p>
+</blockquote>
+<p><strong>论文：</strong> H-JEPA: End-to-End Learning of Hierarchical World Models for Visual Planning（2026）</p>
+<p><strong>论文链接：</strong> <a href="https://arxiv.org/abs/2610.06805" rel="nofollow">https://arxiv.org/abs/2610.06805</a></p>
+<h2>1. 背景：为什么世界模型需要分层？</h2>
+<p>世界模型（World Model）的基本思想是：给定当前状态与动作，预测未来状态。</p>
+<p>$$
+\hat z_{t+1}=F(z_t,a_t)
+$$</p>
+<p>其中，$z_t$ 是环境的隐空间表示，$a_t$ 是动作。</p>
+<p>有了预测模型，就可以通过优化动作序列，让未来状态尽可能接近目标：</p>
+<p>$$ \arg\min_{a_{t+H-1}}
+|\hat z_{t+H}-z_g|^2
+$$</p>
+<p>但单层世界模型存在两个问题：</p>
+<ol>
+<li><strong>长期规划困难</strong>：预测跨度越长，误差累积与动作优化问题通常越严重。</li>
+<li><strong>表征粒度不匹配</strong>：低层控制需要身体姿态、关节等细节，而高层规划可能只关心位置和目标。</li>
+</ol>
+<p>例如，四足机器人已经到达目标位置，但腿部姿态与目标图像不同。如果模型仍然使用包含全部姿态细节的 latent distance，就可能误判为尚未完成任务。</p>
+<p>因此，关键不只是把长期任务拆成短期任务，而是：</p>
+<p><strong>不同时间尺度的规划，是否应该使用不同的世界表征？</strong></p>
+<h2>2. H-JEPA：时间分层 + 表征分层</h2>
+<p>H-JEPA 延续 LeCun 的 JEPA 路线，将多个世界模型组织成层级结构。</p>
+<p>每个层级包含三个模块：</p>
+<ul>
+<li><strong>State Encoder</strong>：提取当前时间尺度需要的状态表示。</li>
+<li><strong>Action Encoder</strong>：将低层动作序列映射为高层宏动作。</li>
+<li><strong>Predictor</strong>：根据状态和动作预测未来 latent。</li>
+</ul>
+<p>对于第 $l$ 层：</p>
+<p>$$ F^{(l)}(z_t^{(l)},a_t^{(l)})
+$$</p>
+<p>更高层的状态由低层表示进一步编码：</p>
+<p>$$
+z_t^{(l+1)}=E^{(l+1)}(z_t^{(l)})
+$$</p>
+<p>这里省略了不同层级之间的时间索引映射。</p>
+<p>在论文主要实验中，相邻层级的预测时间尺度相差两倍。</p>
+<p>例如：</p>
+<ul>
+<li>底层：预测短期动作与姿态变化。</li>
+<li>中层：预测局部运动。</li>
+<li>高层：预测更长时间尺度的空间位置与目标进展。</li>
+</ul>
+<h3>为什么这可能自动产生抽象？</h3>
+<p>考虑一个动力系统：</p>
+<p>$$
+s_t=(x_t,q_t)
+$$</p>
+<p>其中 $x_t$ 表示位置，$q_t$ 表示快速变化的关节姿态。</p>
+<p>在短时间尺度下，两者都可能具有预测价值；但在较长时间跨度下，具体关节姿态可能难以预测，而位置仍然提供稳定信息。</p>
+<p>于是，高层模型可能逐渐学习：</p>
+<p>$$
+z_t^{\mathrm{high}}\approx\phi(x_t)
+$$</p>
+<p>弱化不稳定、与长期预测关系较弱的细节。</p>
+<p>论文通过 probing 实验观察到：在迷宫任务中，高层表示对腿部姿态的信息保留减少，但仍能较好地恢复机器人位置。</p>
+<p><strong>真正有价值的地方是：抽象不完全依靠人工定义，而是由不同时间尺度的预测任务诱导形成。</strong></p>
+<p>不过，这依赖于环境具有合适的时间尺度结构，并不是必然成立的规律。</p>
+<h2>3. 分层规划：让高层决定目标，低层决定动作</h2>
+<p>H-JEPA 首先在高层 latent space 中进行长期规划：</p>
+<p>$$ \arg\min_a
+|\hat z_{\mathrm{high}}(a)-z_g^{\mathrm{high}}|^2
+$$</p>
+<p>高层预测得到的中间状态，作为低层需要实现的子目标。</p>
+<p>低层预测未来状态后，将其映射到高层空间：</p>
+<p>$$ E^{\mathrm{high}}(\hat z^{\mathrm{low}})
+$$</p>
+<p>再优化具体动作：</p>
+<p>$$ g^{\mathrm{high}}
+\right|^2
+$$</p>
+<p>这实现了：</p>
+<p>$$
+\text{长期目标}
+\rightarrow
+\text{抽象子目标}
+\rightarrow
+\text{具体动作}
+$$</p>
+<p>分层规划本身并不新颖，Hierarchical RL、Options 和 Hierarchical MPC 早已有类似思想。</p>
+<p>H-JEPA 更重要的设计是：</p>
+<p><strong>高层不仅负责规划，还提供一个经过学习的目标空间，使低层能够忽略与当前子目标无关的细节。</strong></p>
+<p>换句话说，高层 latent 不只是状态表示，还直接决定了低层优化什么。</p>
+<h2>4. 实验：分层表征真的有帮助吗？</h2>
+<p>论文在 Visual AntMaze、FourRoom、Push-T 和 OGBench Cube 等任务上评估模型。</p>
+<p>其中，Visual AntMaze 的规划成功率：</p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>模型</th>
+<th>成功率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单层 LeWorldModel</td>
+<td>18.0%</td>
+</tr>
+<tr>
+<td>两层 H-JEPA</td>
+<td>39.3%</td>
+</tr>
+<tr>
+<td>三层 H-JEPA</td>
+<td><strong>73.3%</strong></td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p>但更值得关注的是消融实验。</p>
+<p>作者区分了两种收益：</p>
+<ol>
+<li><strong>Temporal Hierarchy</strong>：将长期规划拆分成不同时间尺度。</li>
+<li><strong>Representation Hierarchy</strong>：为不同层级学习独立的状态表示。</li>
+</ol>
+<p>与共享 latent space 的分层世界模型 HWM 比较后，论文发现，独立高层表征在部分环境中能够进一步改善规划。</p>
+<h3>一个关键观察：高层 latent 改变了规划代价的几何结构</h3>
+<p>常见规划目标使用欧氏距离：</p>
+<p>$$
+C(s,g)=|E(s)-E(g)|^2
+$$</p>
+<p>但 latent distance 不一定反映真实的可达性。</p>
+<p>例如，迷宫中两个位置在欧氏空间里很近，却可能被墙隔开。</p>
+<p>论文发现，在 AntMaze 中，高层 latent 构造的目标代价沿走廊变化得更加平滑，能够提供更有用的梯度信号。</p>
+<p>这揭示了一个重要问题：</p>
+<blockquote>
+<p><strong>好的世界模型，不仅要预测准确，还需要学习有利于规划的 latent geometry。</strong></p>
+</blockquote>
+<p>不过，单独更换高层距离函数所带来的提升有限，完整分层规划的收益还依赖于时间分解与子目标优化。</p>
+<p>此外，Push-T 中增加到三层反而导致性能下降，说明更深的层级并非总是有效。</p>
+<h2>5. 更深刻的问题：可预测的信息，不一定是有用的信息</h2>
+<p>这是我认为 H-JEPA 最值得深入思考的部分。</p>
+<p>JEPA 通过预测 latent 学习世界表示，同时利用 SIGReg 防止所有输入映射到同一个常量。</p>
+<p>但论文指出，这仍然可能出现 <strong>Slow-Feature Collapse</strong>。</p>
+<p>假设视频包含：</p>
+<p>$$
+o_t=(b,x_t)
+$$</p>
+<p>其中 $b$ 是静态背景，$x_t$ 是运动中的机器人。</p>
+<p>如果编码器只保留背景：</p>
+<p>$$
+z_t=E(o_t)=\phi(b)
+$$</p>
+<p>那么同一条轨迹中：</p>
+<p>$$
+z_{t+1}=z_t
+$$</p>
+<p>预测器只需要复制当前表示，就能获得很低的预测误差。</p>
+<p>而不同场景具有不同背景，因此整个数据集的表示仍然可以非常丰富，不一定违反 SIGReg 的分布约束。</p>
+<p><strong>模型没有发生传统意义上的常量坍塌，却学到了与控制无关的表示。</strong></p>
+<p>为此，论文引入逆动力学损失：</p>
+<p>|I(z_t,z_{t+1})-a_t|^2<br>
+$$</p>
+<p>要求模型能够根据状态变化预测动作，从而鼓励 latent 保留动作相关信息。</p>
+<p>这暴露了 JEPA 世界模型的一个根本问题：</p>
+<p>$$
+\boxed{
+\text{Predictability}
+\neq
+\text{Controllability}
+}
+$$</p>
+<p>容易预测的背景未必有用；难以预测的接触、碰撞等瞬时事件却可能决定之后的动力学。</p>
+<p>因此，仅依赖预测误差和表征分布正则化，无法保证模型真正理解与控制相关的世界结构。</p>
+<h2>6. 相关工作：H-JEPA 在 JEPA 路线中的位置</h2>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>工作</th>
+<th>核心思想</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>I-JEPA（2023）</td>
+<td>在图像表征空间中预测，而非重建像素</td>
+</tr>
+<tr>
+<td>V-JEPA / V-JEPA 2（2024–2025）</td>
+<td>学习视频时空表示，并探索动作条件预测</td>
+</tr>
+<tr>
+<td>LeJEPA（2025）</td>
+<td>使用 SIGReg 简化非坍塌表征学习</td>
+</tr>
+<tr>
+<td>LeWorldModel（2026）</td>
+<td>端到端学习动作条件世界模型并进行规划</td>
+</tr>
+<tr>
+<td>H-JEPA（2026）</td>
+<td>联合学习多时间尺度世界模型和层级抽象表示</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p>H-JEPA 并没有提出全新的分层控制理论。</p>
+<p>其主要贡献是将时间分层、独立表征空间与可微 latent planning 结合，并通过实验分析不同层级如何产生抽象、改善规划。</p>
+<h2>7. 思考：世界模型真正需要什么样的抽象？</h2>
+<p>H-JEPA 的基本假设是：</p>
+<p><strong>不同时间尺度上的可预测性，可以帮助模型学习不同层级的世界表示。</strong></p>
+<p>但长期预测中容易保留的信息，不一定是决定未来的重要信息。</p>
+<p>例如：</p>
+<ul>
+<li>静态背景：长期稳定、容易预测，但可能无关。</li>
+<li>机器人位置：变化较慢，对导航重要。</li>
+<li>物体碰撞：瞬时、高频，却可能决定之后的整个轨迹。</li>
+</ul>
+<p>所以一个更加理想的世界模型，不应该只根据时间尺度决定抽象，而应该同时考虑：</p>
+<p>f(<br>
+\text{Predictability},<br>
+\text{Controllability},<br>
+\text{Causal Relevance},<br>
+\text{Physical Structure}<br>
+)<br>
+$$</p>
+<p>这也与 Geometric GNN 和物理动力学建模存在直接联系。</p>
+<p>例如，可以按照以下结构组织世界模型：</p>
+<p>$$
+\text{Particle / Joint}
+\rightarrow
+\text{Object}
+\rightarrow
+\text{Scene}
+$$</p>
+<p>底层保留局部几何和接触动力学，中层建模对象运动与交互，高层关注对象关系和长期任务目标。</p>
+<p>与纯粹基于时间跨度的抽象不同，这种方法还可以引入等变性、刚体约束和对象级关系等物理归纳偏置。</p>
+<p>另一个值得关注的问题是：能否直接学习与可达性或控制代价一致的 latent distance，而不只是依靠长跨度预测间接塑造规划空间？</p>
+<p>这些方向目前仍属于值得探索的研究问题。</p>
+<h2>8. 总结</h2>
+<p>H-JEPA 最重要的贡献，并不是证明“分层规划有效”，而是进一步说明：</p>
+<ol>
+<li><strong>不同预测时间尺度可以诱导不同的状态抽象。</strong></li>
+<li><strong>高层表征能够改变规划代价的几何结构，与时间分解形成互补。</strong></li>
+<li><strong>预测误差低、表征不坍塌，并不意味着模型学到了控制相关的信息。</strong></li>
+</ol>
+<p>我认为第三点尤其重要。</p>
+<p>对于世界模型来说，未来真正需要解决的，可能不只是如何更准确地预测未来，而是：</p>
+<blockquote>
+<p><strong>如何学习一种既保留真实动力学，又具有因果意义、动作可控性和规划友好性的世界表示？</strong></p>
+</blockquote>
+<p>H-JEPA 沿着这个方向迈出了一步，但距离真正具备物理理解和长期自主规划能力的通用世界模型，还有相当长的路要走。</p></div>
+<div style="font-size:small;margin-top:8px;float:right;"></div>
+
+<button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>
+<div class="comments" id="comments"></div>
+
+</div>
+    <div id="footer"><div id="footer1">Copyright © <span id="copyrightYear"></span> <a href="https://carolynwei.github.io">Wei_jc's Blog</a></div>
+<div id="footer2">
+    <span id="runday"></span><span>Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a></span>
+</div>
+
+<script>
+var now=new Date();
+document.getElementById("copyrightYear").innerHTML=now.getFullYear();
+
+if(""!=""){
+    var startSite=new Date("");
+    var diff=now.getTime()-startSite.getTime();
+    var diffDay=Math.floor(diff/(1000*60*60*24));
+    document.getElementById("runday").innerHTML="网站运行 "+diffDay+" 天"+" • ";
+}
+</script></div>
+</body>
+<script>
+var IconList={'sun': 'M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V.75A.75.75 0 018 0zm0 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM2.343 2.343a.75.75 0 011.061 0l1.06 1.061a.75.75 0 01-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zm9.193 9.193a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061l-1.061-1.06a.75.75 0 010-1.061zM16 8a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5A.75.75 0 0116 8zM3 8a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h1.5A.75.75 0 013 8zm10.657-5.657a.75.75 0 010 1.061l-1.061 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zm-9.193 9.193a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 11-1.061-1.06l1.06-1.061a.75.75 0 011.061 0z', 'moon': 'M9.598 1.591a.75.75 0 01.785-.175 7 7 0 11-8.967 8.967.75.75 0 01.961-.96 5.5 5.5 0 007.046-7.046.75.75 0 01.175-.786zm1.616 1.945a7 7 0 01-7.678 7.678 5.5 5.5 0 107.678-7.678z', 'sync': 'M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z', 'home': 'M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z', 'github': 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z'};
+var utterancesLoad=0;
+
+let themeSettings={
+    "dark": ["dark","moon","#00f0ff","dark-blue"],
+    "light": ["light","sun","#ff5000","github-light"],
+    "auto": ["auto","sync","","preferred-color-scheme"]
+};
+function changeTheme(mode, icon, color, utheme){
+    document.documentElement.setAttribute("data-color-mode",mode);
+    document.getElementById("themeSwitch").setAttribute("d",value=IconList[icon]);
+    document.getElementById("themeSwitch").parentNode.style.color=color;
+    if(utterancesLoad==1){utterancesTheme(utheme);}
+}
+function modeSwitch(){
+    let currentMode=document.documentElement.getAttribute('data-color-mode');
+    let newMode = currentMode === "light" ? "dark" : currentMode === "dark" ? "auto" : "light";
+    localStorage.setItem("meek_theme", newMode);
+    if(themeSettings[newMode]){
+        changeTheme(...themeSettings[newMode]);
+    }
+}
+function utterancesTheme(theme){
+    const message={type:'set-theme',theme: theme};
+    const iframe=document.getElementsByClassName('utterances-frame')[0];
+    iframe.contentWindow.postMessage(message,'https://utteranc.es');
+}
+if(themeSettings[theme]){changeTheme(...themeSettings[theme]);}
+console.log("\n %c Gmeek last https://github.com/Meekdai/Gmeek \n","padding:5px 0;background:#02d81d;color:#fff");
+</script>
+
+<script>
+document.getElementById("pathHome").setAttribute("d",IconList["home"]);
+document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
+
+
+
+function openComments(){
+    cm=document.getElementById("comments");
+    cmButton=document.getElementById("cmButton");
+    cmButton.disabled=true;
+    cmButton.innerHTML="loading";
+    span=document.createElement("span");
+    span.setAttribute("class","AnimatedEllipsis");
+    cmButton.appendChild(span);
+
+    script=document.createElement("script");
+    script.setAttribute("src","https://utteranc.es/client.js");
+    script.setAttribute("repo","carolynwei/carolynwei.github.io");
+    script.setAttribute("issue-term","title");
+    
+    if(localStorage.getItem("meek_theme")=="dark"){script.setAttribute("theme","dark-blue");}
+    else if(localStorage.getItem("meek_theme")=="light") {script.setAttribute("theme","github-light");}
+    else{script.setAttribute("theme","preferred-color-scheme");}
+    
+    script.setAttribute("crossorigin","anonymous");
+    script.setAttribute("async","");
+    cm.appendChild(script);
+
+    int=self.setInterval("iFrameLoading()",200);
+}
+
+function iFrameLoading(){
+    var utterances=document.getElementsByClassName('utterances');
+    if(utterances.length==1){
+        if(utterances[0].style.height!=""){
+            utterancesLoad=1;
+            int=window.clearInterval(int);
+            document.getElementById("cmButton").style.display="none";
+            console.log("utterances Load OK");
+        }
+    }
+}
+
+
+
+</script>
+<script>MathJax = {tex: {inlineMath: [["$", "$"]]}};</script><script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</html>
