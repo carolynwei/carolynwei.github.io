@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html data-color-mode="light" data-dark-theme="dark" data-light-theme="light" lang="zh-CN">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
+    
+    <link rel="icon" href="https://avatars.githubusercontent.com/u/142194912?s=400&u=4e5006ad422aa3d5c4aa111fe6e1661b48cdb0d3&v=4"><script>
+        let theme = localStorage.getItem("meek_theme") || "light";
+        document.documentElement.setAttribute("data-color-mode", theme);
+    </script>
+<meta name="description" content="> 核心问题：如何让模型从“记住知识”转向“寻找知识、利用知识”？
+从 BM25、稠密检索、对比学习、ANCE 到 RAG，这条技术演进路线的核心，是不断改进模型获取和使用外部知识的能力。">
+<meta property="og:title" content="从 BM25 到 RAG：大模型为什么不再需要记住所有知识？">
+<meta property="og:description" content="> 核心问题：如何让模型从“记住知识”转向“寻找知识、利用知识”？
+从 BM25、稠密检索、对比学习、ANCE 到 RAG，这条技术演进路线的核心，是不断改进模型获取和使用外部知识的能力。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://carolynwei.github.io/post/cong-%20BM25%20-dao-%20RAG%EF%BC%9A-da-mo-xing-wei-shen-me-bu-zai-xu-yao-ji-zhu-suo-you-zhi-shi-%EF%BC%9F.html">
+<meta property="og:image" content="https://avatars.githubusercontent.com/u/142194912?s=400&u=4e5006ad422aa3d5c4aa111fe6e1661b48cdb0d3&v=4">
+<title>从 BM25 到 RAG：大模型为什么不再需要记住所有知识？</title>
+
+
+
+</head>
+<style>
+body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;padding: 45px;font-size: 16px;font-family: sans-serif;line-height: 1.25;}
+#header{display:flex;padding-bottom:8px;border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted));margin-bottom: 16px;}
+#footer {margin-top:64px; text-align: center;font-size: small;}
+
+</style>
+
+<style>
+.postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
+.title-right{display:flex;margin:auto 0 0 auto;}
+.title-right .circle{padding: 14px 16px;margin-right:8px;}
+#postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
+#postBody hr{height:2px;}
+#cmButton{height:48px;margin-top:48px;}
+#comments{margin-top:64px;}
+.g-emoji{font-size:24px;}
+@media (max-width: 600px) {
+    body {padding: 8px;}
+    .postTitle{font-size:24px;}
+}
+
+</style>
+
+
+
+
+<body>
+    <div id="header">
+<h1 class="postTitle">从 BM25 到 RAG：大模型为什么不再需要记住所有知识？</h1>
+<div class="title-right">
+    <a href="https://carolynwei.github.io" id="buttonHome" class="btn btn-invisible circle" title="首页">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathHome" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+    <a href="https://github.com/carolynwei/carolynwei.github.io/issues/8" target="_blank" class="btn btn-invisible circle" title="Issue">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathIssue" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+
+    <a class="btn btn-invisible circle" onclick="modeSwitch();" title="切换主题">
+        <svg class="octicon" width="16" height="16" >
+            <path id="themeSwitch" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+
+</div>
+</div>
+    
+<!-- reading-time-start -->
+<div
+    class="reading-time"
+    style="
+        margin: -6px 0 22px 0;
+        font-size: 14px;
+        color: var(--color-fg-muted);
+        opacity: 0.85;
+    "
+>
+    ⏱ 约 14 分钟读完
+</div>
+<!-- reading-time-end -->
+
+<div id="content">
+<div class="markdown-body" id="postBody"><blockquote>
+<p>核心问题：如何让模型从“记住知识”转向“寻找知识、利用知识”？<br>
+从 BM25、稠密检索、对比学习、ANCE 到 RAG，这条技术演进路线的核心，是不断改进模型获取和使用外部知识的能力。</p>
+</blockquote>
+<h2>1. BM25：为什么关键词检索如此强大？</h2>
+<p>传统信息检索的代表方法是 <strong>BM25</strong>，它主要根据关键词匹配程度、词频、逆文档频率（IDF）以及文档长度进行排序。</p>
+<p>例如，用户查询：</p>
+<blockquote>
+<p>谁提出了相对论？</p>
+</blockquote>
+<p>BM25 倾向于找出包含“相对论”等关键词的文档。</p>
+<p>但如果用户换一种问法：</p>
+<blockquote>
+<p>哪位科学家建立了关于时空关系的新理论？</p>
+</blockquote>
+<p>即使语义相同，由于关键词不同，BM25 也可能漏掉正确文档。</p>
+<p>这就是 <strong>Vocabulary Mismatch（词汇失配）</strong>。</p>
+<p>于是产生了一个自然的想法：</p>
+<p><strong>能否不再比较关键词，而是直接比较语义？</strong></p>
+<h2>2. 稠密检索：双塔架构 + 对比学习</h2>
+<p>稠密检索（Dense Retrieval）使用神经网络，将 Query 和 Document 映射到同一个向量空间。</p>
+<p>经典方案是 <strong>双塔架构（Dual Encoder）</strong>：</p>
+<p>$$
+\mathbf q=f_\theta(q),\qquad
+\mathbf d=g_\phi(d)
+$$</p>
+<p>通过向量相似度进行检索：</p>
+<p>$$
+s(q,d)=\mathbf q^\top\mathbf d
+$$</p>
+<p>双塔的关键优势是：</p>
+<ul>
+<li><strong>独立编码</strong>：Query 和 Document 分别经过 Encoder。</li>
+<li><strong>离线索引</strong>：文档向量可以预先计算并存储。</li>
+<li><strong>高效搜索</strong>：在线只需编码 Query，再利用 ANN 搜索相近文档。</li>
+</ul>
+<p>但双塔本身并不能保证语义相关的文本距离更近。</p>
+<p>因此，需要通过 <strong>对比学习（Contrastive Learning）</strong> 训练向量空间。</p>
+<p>给定一个正样本 $d^+$ 和若干负样本 $d_j^-$，典型的 InfoNCE Loss 为：</p>
+<p>$$
+\mathcal L=
+-\log
+\frac{\exp(s(q,d^+)/\tau)}
+{\exp(s(q,d^+)/\tau)+
+\sum_j\exp(s(q,d_j^-)/\tau)}
+$$</p>
+<p>其核心目标非常简单：</p>
+<p>$$
+\boxed{s(q,d^+)&gt;s(q,d^-)}
+$$</p>
+<p>让相关文档更接近 Query，不相关文档更远离 Query。</p>
+<p><strong>然而，早期稠密检索并没有稳定地超越 BM25。为什么？</strong></p>
+<h2>3. ANCE：问题不是模型不够强，而是负样本太简单</h2>
+<p>经典论文：[<a href="https://arxiv.org/abs/2007.00808" rel="nofollow">ANCE — Approximate Nearest Neighbor Negative Contrastive Learning</a>](<a href="https://arxiv.org/abs/2007.00808" rel="nofollow">https://arxiv.org/abs/2007.00808</a>)</p>
+<p>一个重要问题在于：随机负样本往往太容易区分。</p>
+<p>例如：</p>
+<p><strong>Query：谁提出了相对论？</strong></p>
+<ul>
+<li>正样本：爱因斯坦提出了相对论。</li>
+<li>简单负样本：今天的苹果价格上涨了。</li>
+<li>困难负样本：牛顿提出了经典力学理论。</li>
+</ul>
+<p>简单负样本与 Query 几乎无关，模型很快就能将其区分，对训练提供的梯度信号也会逐渐减弱。</p>
+<p>真正有训练价值的，往往是那些<strong>看起来相关、却不是正确答案的文档</strong>。</p>
+<p>ANCE 提出 <strong>Global Hard Negative Mining</strong>：</p>
+<ol>
+<li>使用当前双塔模型编码整个文档库。</li>
+<li>构建 ANN（Approximate Nearest Neighbor）向量索引。</li>
+<li>为每个 Query 检索相似度高但非已知正样本的文档。</li>
+<li>将这些困难负样本用于对比学习。</li>
+<li>不断更新模型，并异步刷新索引。</li>
+</ol>
+<p>由此形成一个训练闭环：</p>
+<p>$$
+\boxed{
+\text{检索困难负样本}
+\rightarrow
+\text{优化模型}
+\rightarrow
+\text{挖掘更难的负样本}
+}
+$$</p>
+<p>ANCE 在多个检索基准上显著提升了稠密检索性能，证明了一个重要观点：</p>
+<blockquote>
+<p><strong>负样本的质量，往往比单纯增加负样本的数量更重要。</strong></p>
+</blockquote>
+<p>当然，困难负样本也可能是未标注的正样本（False Negative），因此并不是越难越好。</p>
+<h2>4. RAG：从寻找知识到利用知识</h2>
+<p>此前的方法主要解决：</p>
+<blockquote>
+<p>如何从海量文档中找到相关信息？</p>
+</blockquote>
+<p>但找到文档不等于能够回答问题。</p>
+<p>这就引出了 <strong>RAG（Retrieval-Augmented Generation）</strong>。</p>
+<p>经典论文：[<a href="https://arxiv.org/abs/2005.11401" rel="nofollow">Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks</a>](<a href="https://arxiv.org/abs/2005.11401" rel="nofollow">https://arxiv.org/abs/2005.11401</a>)</p>
+<p>传统语言模型主要依赖参数化记忆（Parametric Memory）回答问题：</p>
+<p>$$
+p_\theta(y\mid x)
+$$</p>
+<p>这意味着，模型既要记住知识，又要理解问题并生成答案。</p>
+<p>但事实知识往往需要更新，而参数中的知识难以被精确修改。</p>
+<p>RAG 提出另一种架构：</p>
+<p>$$
+\boxed{
+\text{Query}
+\rightarrow
+\text{Retriever}
+\rightarrow
+\text{External Knowledge}
+\rightarrow
+\text{Generator}
+\rightarrow
+\text{Answer}
+}
+$$</p>
+<p>其中：</p>
+<ul>
+<li><strong>Retriever</strong>：从外部知识库寻找相关证据。</li>
+<li><strong>Generator</strong>：结合问题和检索证据生成答案。</li>
+</ul>
+<p>RAG 实现了<strong>知识记忆与推理生成在系统架构上的部分解耦</strong>。</p>
+<p>模型不再必须把所有事实都记进参数，而是可以在需要时检索外部知识。</p>
+<p>不过，这不代表语言模型内部不再存储知识，也不意味着检索到正确证据就一定能够正确推理。</p>
+<h2>5. RAG 如何训练：到底优化检索器还是生成器？</h2>
+<p>RAG 包含两个可训练模块，因此存在不同的优化策略。</p>
+<p><strong>方法一：固定 Generator，训练 Retriever</strong></p>
+<p>保持生成模型不变，让检索器寻找更有助于生成正确答案的文档。</p>
+<p>$$
+\max_\eta
+\log\sum_z
+p_\eta(z\mid x)
+p_{\theta_{\mathrm{fixed}}}(y\mid x,z)
+$$</p>
+<p>核心思想：</p>
+<blockquote>
+<p>让检索器适应生成器，找到真正有助于回答问题的证据。</p>
+</blockquote>
+<p>这类思路也出现在 [<a href="https://arxiv.org/abs/2301.12652" rel="nofollow">REPLUG</a>](<a href="https://arxiv.org/abs/2301.12652" rel="nofollow">https://arxiv.org/abs/2301.12652</a>) 等工作中。</p>
+<p><strong>方法二：固定 Retriever，训练 Generator</strong></p>
+<p>保持检索器不变，让生成器学会更好地理解、整合检索结果。</p>
+<p>典型的监督训练目标为：</p>
+<p>$$
+-\sum_t \log p_\theta(y_t \mid x, D_K, y_{&lt;t})
+$$</p>
+<p>核心思想：</p>
+<blockquote>
+<p>让生成器适应检索器，更好地利用已有证据。</p>
+</blockquote>
+<p><strong>方法三：联合或交替训练</strong></p>
+<p>同时优化两个模块，或者分阶段交替更新，使二者相互适应。</p>
+<p>需要注意，<strong>顺序训练、交替训练和端到端联合训练并不完全等价</strong>；检索的离散 Top-K 操作也使端到端优化更复杂。</p>
+<p>这引出了一个非常关键的转变：</p>
+<p>$$
+\boxed{
+\text{Retrieval Relevance}
+\neq
+\text{Generation Utility}
+}
+$$</p>
+<p>一篇文档在语义上与问题相关，不代表它一定能够帮助生成器给出正确答案。</p>
+<p>因此，RAG 不仅要优化“检索相关性”，还要考虑“知识对最终任务的实际价值”。</p>
+<h2>6. 总结</h2>
+<p>这条发展路线背后，其实包含三个不断深入的问题：</p>
+<p><strong>第一，如何找到知识？</strong></p>
+<p>从关键词匹配发展到语义检索。</p>
+<p><strong>第二，如何更好地学习检索知识？</strong></p>
+<p>从随机负样本发展到 ANCE 的动态困难负样本挖掘。</p>
+<p><strong>第三，如何有效利用知识？</strong></p>
+<p>从独立的检索任务发展到 RAG 中检索与生成的协同优化。</p>
+<p>最终，我们得到一个更一般的认识：</p>
+<blockquote>
+<p><strong>模型的智能不仅取决于内部参数存储了多少知识，还取决于它能否在合适的时候找到正确的知识，并利用这些知识完成推理。</strong></p>
+</blockquote>
+<p>RAG 的价值并不是彻底取代参数化记忆，而是提供了一种更灵活的知识获取机制。</p>
+<p>进一步的问题是：如果复杂推理需要多次查找信息，那么检索是否应该从一次性的前置步骤，变成推理过程中可以反复调用的操作？</p>
+<p>这也自然引向了 <strong>Iterative RAG、Multi-hop RAG 和 Agentic RAG</strong> 等后续方向。</p>
+<h3>参考论文</h3>
+<ol>
+<li><a href="https://arxiv.org/abs/2004.04906" rel="nofollow">DPR — Dense Passage Retrieval for Open-Domain Question Answering (2020)</a></li>
+<li><a href="https://arxiv.org/abs/2007.00808" rel="nofollow">ANCE — Approximate Nearest Neighbor Negative Contrastive Learning (2020)</a></li>
+<li><a href="https://arxiv.org/abs/2005.11401" rel="nofollow">RAG — Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks (2020)</a></li>
+<li>[REPLUG — Retrieval-Augmented Black-Box Language Models (2023)](</li>
+</ol></div>
+<div style="font-size:small;margin-top:8px;float:right;"></div>
+
+<button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>
+<div class="comments" id="comments"></div>
+
+</div>
+    <div id="footer"><div id="footer1">Copyright © <span id="copyrightYear"></span> <a href="https://carolynwei.github.io">Wei_jc's Blog</a></div>
+<div id="footer2">
+    <span id="runday"></span><span>Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a></span>
+</div>
+
+<script>
+var now=new Date();
+document.getElementById("copyrightYear").innerHTML=now.getFullYear();
+
+if(""!=""){
+    var startSite=new Date("");
+    var diff=now.getTime()-startSite.getTime();
+    var diffDay=Math.floor(diff/(1000*60*60*24));
+    document.getElementById("runday").innerHTML="网站运行 "+diffDay+" 天"+" • ";
+}
+</script></div>
+</body>
+<script>
+var IconList={'sun': 'M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V.75A.75.75 0 018 0zm0 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM2.343 2.343a.75.75 0 011.061 0l1.06 1.061a.75.75 0 01-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zm9.193 9.193a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061l-1.061-1.06a.75.75 0 010-1.061zM16 8a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5A.75.75 0 0116 8zM3 8a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h1.5A.75.75 0 013 8zm10.657-5.657a.75.75 0 010 1.061l-1.061 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zm-9.193 9.193a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 11-1.061-1.06l1.06-1.061a.75.75 0 011.061 0z', 'moon': 'M9.598 1.591a.75.75 0 01.785-.175 7 7 0 11-8.967 8.967.75.75 0 01.961-.96 5.5 5.5 0 007.046-7.046.75.75 0 01.175-.786zm1.616 1.945a7 7 0 01-7.678 7.678 5.5 5.5 0 107.678-7.678z', 'sync': 'M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z', 'home': 'M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z', 'github': 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z'};
+var utterancesLoad=0;
+
+let themeSettings={
+    "dark": ["dark","moon","#00f0ff","dark-blue"],
+    "light": ["light","sun","#ff5000","github-light"],
+    "auto": ["auto","sync","","preferred-color-scheme"]
+};
+function changeTheme(mode, icon, color, utheme){
+    document.documentElement.setAttribute("data-color-mode",mode);
+    document.getElementById("themeSwitch").setAttribute("d",value=IconList[icon]);
+    document.getElementById("themeSwitch").parentNode.style.color=color;
+    if(utterancesLoad==1){utterancesTheme(utheme);}
+}
+function modeSwitch(){
+    let currentMode=document.documentElement.getAttribute('data-color-mode');
+    let newMode = currentMode === "light" ? "dark" : currentMode === "dark" ? "auto" : "light";
+    localStorage.setItem("meek_theme", newMode);
+    if(themeSettings[newMode]){
+        changeTheme(...themeSettings[newMode]);
+    }
+}
+function utterancesTheme(theme){
+    const message={type:'set-theme',theme: theme};
+    const iframe=document.getElementsByClassName('utterances-frame')[0];
+    iframe.contentWindow.postMessage(message,'https://utteranc.es');
+}
+if(themeSettings[theme]){changeTheme(...themeSettings[theme]);}
+console.log("\n %c Gmeek last https://github.com/Meekdai/Gmeek \n","padding:5px 0;background:#02d81d;color:#fff");
+</script>
+
+<script>
+document.getElementById("pathHome").setAttribute("d",IconList["home"]);
+document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
+
+
+
+function openComments(){
+    cm=document.getElementById("comments");
+    cmButton=document.getElementById("cmButton");
+    cmButton.disabled=true;
+    cmButton.innerHTML="loading";
+    span=document.createElement("span");
+    span.setAttribute("class","AnimatedEllipsis");
+    cmButton.appendChild(span);
+
+    script=document.createElement("script");
+    script.setAttribute("src","https://utteranc.es/client.js");
+    script.setAttribute("repo","carolynwei/carolynwei.github.io");
+    script.setAttribute("issue-term","title");
+    
+    if(localStorage.getItem("meek_theme")=="dark"){script.setAttribute("theme","dark-blue");}
+    else if(localStorage.getItem("meek_theme")=="light") {script.setAttribute("theme","github-light");}
+    else{script.setAttribute("theme","preferred-color-scheme");}
+    
+    script.setAttribute("crossorigin","anonymous");
+    script.setAttribute("async","");
+    cm.appendChild(script);
+
+    int=self.setInterval("iFrameLoading()",200);
+}
+
+function iFrameLoading(){
+    var utterances=document.getElementsByClassName('utterances');
+    if(utterances.length==1){
+        if(utterances[0].style.height!=""){
+            utterancesLoad=1;
+            int=window.clearInterval(int);
+            document.getElementById("cmButton").style.display="none";
+            console.log("utterances Load OK");
+        }
+    }
+}
+
+
+
+</script>
+<script>MathJax = {tex: {inlineMath: [["$", "$"]]}};</script><script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</html>
