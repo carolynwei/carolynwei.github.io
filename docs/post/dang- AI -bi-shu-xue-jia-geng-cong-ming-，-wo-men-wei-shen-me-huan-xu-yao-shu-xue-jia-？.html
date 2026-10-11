@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html data-color-mode="light" data-dark-theme="dark" data-light-theme="light" lang="zh-CN">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
+    
+    <link rel="icon" href="https://avatars.githubusercontent.com/u/142194912?s=400&u=4e5006ad422aa3d5c4aa111fe6e1661b48cdb0d3&v=4"><script>
+        let theme = localStorage.getItem("meek_theme") || "light";
+        document.documentElement.setAttribute("data-color-mode", theme);
+    </script>
+<meta name="description" content="> **AI 可以证明定理，甚至发现新的数学理论。">
+<meta property="og:title" content="当 AI 比数学家更聪明，我们为什么还需要数学家？">
+<meta property="og:description" content="> **AI 可以证明定理，甚至发现新的数学理论。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://carolynwei.github.io/post/dang-%20AI%20-bi-shu-xue-jia-geng-cong-ming-%EF%BC%8C-wo-men-wei-shen-me-huan-xu-yao-shu-xue-jia-%EF%BC%9F.html">
+<meta property="og:image" content="https://avatars.githubusercontent.com/u/142194912?s=400&u=4e5006ad422aa3d5c4aa111fe6e1661b48cdb0d3&v=4">
+<title>当 AI 比数学家更聪明，我们为什么还需要数学家？</title>
+
+
+
+</head>
+<style>
+body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;padding: 45px;font-size: 16px;font-family: sans-serif;line-height: 1.25;}
+#header{display:flex;padding-bottom:8px;border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted));margin-bottom: 16px;}
+#footer {margin-top:64px; text-align: center;font-size: small;}
+
+</style>
+
+<style>
+.postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
+.title-right{display:flex;margin:auto 0 0 auto;}
+.title-right .circle{padding: 14px 16px;margin-right:8px;}
+#postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
+#postBody hr{height:2px;}
+#cmButton{height:48px;margin-top:48px;}
+#comments{margin-top:64px;}
+.g-emoji{font-size:24px;}
+@media (max-width: 600px) {
+    body {padding: 8px;}
+    .postTitle{font-size:24px;}
+}
+
+</style>
+
+
+
+
+<body>
+    <div id="header">
+<h1 class="postTitle">当 AI 比数学家更聪明，我们为什么还需要数学家？</h1>
+<div class="title-right">
+    <a href="https://carolynwei.github.io" id="buttonHome" class="btn btn-invisible circle" title="首页">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathHome" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+    <a href="https://github.com/carolynwei/carolynwei.github.io/issues/11" target="_blank" class="btn btn-invisible circle" title="Issue">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathIssue" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+
+    <a class="btn btn-invisible circle" onclick="modeSwitch();" title="切换主题">
+        <svg class="octicon" width="16" height="16" >
+            <path id="themeSwitch" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+
+</div>
+</div>
+    
+<!-- reading-time-start -->
+<div
+    class="reading-time"
+    style="
+        margin: -6px 0 22px 0;
+        font-size: 14px;
+        color: var(--color-fg-muted);
+        opacity: 0.85;
+    "
+>
+    ⏱ 约 20 分钟读完
+</div>
+<!-- reading-time-end -->
+
+<div id="content">
+<div class="markdown-body" id="postBody"><blockquote>
+<p><strong>AI 可以证明定理，甚至发现新的数学理论。但当机器越来越擅长思考，人类科学家还有什么不可替代的价值？</strong></p>
+</blockquote>
+<p>2026 年 9 月，菲尔兹奖得主陶哲轩（Terence Tao）的博客连续刊载了两篇引发数学界讨论的文章：</p>
+<ul>
+<li>[<a href="https://terrytao.wordpress.com/2026/09/18/if-math-is-more-than-proof-we-need-to-better-celebrate-the-rest-of-it/" rel="nofollow">If Math Is More Than Proof, We Need to Better Celebrate the Rest of It</a>](<a href="https://terrytao.wordpress.com/2026/09/18/if-math-is-more-than-proof-we-need-to-better-celebrate-the-rest-of-it/" rel="nofollow">https://terrytao.wordpress.com/2026/09/18/if-math-is-more-than-proof-we-need-to-better-celebrate-the-rest-of-it/</a>) — Grant Sanderson（3Blue1Brown 创始人）</li>
+<li>[<a href="https://terrytao.wordpress.com/2026/09/19/why-do-we-need-human-mathematicians-anymore/" rel="nofollow">Why Do We Need Human Mathematicians Anymore?</a>](<a href="https://terrytao.wordpress.com/2026/09/19/why-do-we-need-human-mathematicians-anymore/" rel="nofollow">https://terrytao.wordpress.com/2026/09/19/why-do-we-need-human-mathematicians-anymore/</a>) — Po-Shen Loh（数学家、卡内基梅隆大学教授）</li>
+</ul>
+<p>两篇文章共同探讨了一个正在变得现实的问题：</p>
+<p><strong>当 AI 可以自动完成科学研究，我们究竟应该如何重新定义人类科学家的价值？</strong></p>
+<h2>一、当 AI 能够证明定理，数学家的价值是什么？</h2>
+<p>传统数学研究往往以新定理和新证明衡量学术贡献：</p>
+<p>$$
+\text{Mathematical Progress} \approx \text{New Theorems and Proofs}
+$$</p>
+<p>这套评价体系过去相当有效，因为发现并证明重要定理，通常意味着数学家创造了新的概念、方法和理解。</p>
+<p>但 AI 正在改变这种关系。</p>
+<p>随着大语言模型、自动定理证明和 Lean 等形式化验证工具的发展，机器能够越来越高效地寻找证明、验证结论。</p>
+<p>这就产生了一个问题：</p>
+<p><strong>如果 AI 能够生成正确的证明，却没有让人类更好地理解数学，那么这算不算真正的科学进步？</strong></p>
+<p>Grant Sanderson 认为，证明在一定程度上只是一个 <em>Proxy（代理指标）</em>，数学更深层的目标是：</p>
+<p>$$
+\boxed{\text{Advancing Human Understanding}}
+$$</p>
+<p>即推进人类对数学世界的理解。</p>
+<p>过去，证明与理解往往高度相关；而 AI 可能逐渐打破这种关联。</p>
+<p>因此，<strong>正确性和理解应当被视为两种不同的研究贡献。</strong></p>
+<h2>二、从 Proof 到 Understanding：什么是真正的数学理解？</h2>
+<p>Sanderson 提出了一个重要概念：</p>
+<p><strong>Motivated Explanation（动机驱动的解释）。</strong></p>
+<p>传统数学证明主要回答：</p>
+<blockquote>
+<p>为什么这个定理成立？</p>
+</blockquote>
+<p>而动机驱动的解释还希望回答：</p>
+<blockquote>
+<p>为什么会想到这个定理？为什么需要这样的定义？它与其他数学结构有什么联系？</p>
+</blockquote>
+<p>例如，在线性代数中，我们可以直接定义特征向量：</p>
+<p>$$
+Av=\lambda v
+$$</p>
+<p>但更好的解释应该从问题出发：</p>
+<p>一个线性变换通常会改变向量的方向与长度，那么是否存在一些特殊方向，在变换后保持不变，只发生伸缩？</p>
+<p>于是，特征向量的定义便自然出现。</p>
+<p>两种表达都正确，但后者提供了更深的概念理解。</p>
+<p>Sanderson 因此提出 <strong>Open Exposition Problems（开放式阐释问题）</strong>：</p>
+<p>对于那些已经有严格证明、却缺乏清晰直觉和统一解释的数学结果，寻找更好的理解方式，也应该是一项受到认可的科研工作。</p>
+<p>未来，AI 可能生成成千上万个复杂证明，而真正重要的工作之一，是从中提炼可理解、可迁移、可推广的数学思想。</p>
+<p>$$
+\text{Discovery}
+\rightarrow
+\text{Interpretation}
+\rightarrow
+\text{Generalization}
+$$</p>
+<p>科学进步不只是得到答案，还包括理解答案背后的结构。</p>
+<h2>三、但如果 AI 连理解都比人类更强呢？</h2>
+<p>Po-Shen Loh 在第二篇文章中提出了一个更尖锐的问题。</p>
+<p>Sanderson 强调人类理解的重要性，但如果未来 AI 不仅能生成证明，还能提供比人类更好的解释，甚至创造更深刻的数学理论呢？</p>
+<p>难道我们只能不断寻找 AI 尚未掌握的技能，以证明人类仍然有价值？</p>
+<p>Loh 认为，这种思路本身就存在问题。</p>
+<p><strong>人类数学家的价值，不应该建立在 AI 永远无法超越人类的假设上。</strong></p>
+<p>即使 AI 在数学能力上全面超过人类，也不意味着人类应该放弃数学研究。</p>
+<p>因为我们真正追求的目标不是最大化数学定理的数量：</p>
+<p>$$
+\max \ \text{Rate of Mathematical Discovery}
+$$</p>
+<p>而是：</p>
+<p>$$
+\boxed{\max \ \text{Human Flourishing}}
+$$</p>
+<p>即促进人类的繁荣与福祉。</p>
+<p>数学发现只是实现这一目标的手段之一。</p>
+<p>这就引出了一个更根本的问题：</p>
+<p><strong>谁来决定 AI 应该研究什么，以及研究成果应该如何被使用？</strong></p>
+<h2>四、Capability ≠ Alignment：能力不等于目标一致</h2>
+<p>Loh 的核心论证可以概括为：</p>
+<p>$$
+\text{Intelligence} \neq \text{Values}
+$$</p>
+<p>一个 AI 系统即使拥有远超人类的数学能力，也不代表它的目标必然符合人类利益。</p>
+<p>因此，仅仅追求 AI 的研究效率是不够的，我们还需要确保人类能够有效地引导和监督它。</p>
+<p>但这里存在一个容易被忽视的问题：</p>
+<p><strong>拥有决策权，不等于拥有决策能力。</strong></p>
+<p>假设某个超级 AI 发现了一种全新的密码攻击算法。</p>
+<p>人类当然可以保留最终审批权，但如果负责审批的人完全不理解相关数学和密码学，又如何判断这个技术是否可靠、是否危险、是否应该公开？</p>
+<p>这种情况下，所谓的 Human-in-the-loop，很可能只是形式上的人类参与。</p>
+<p>Loh 用了一个形象的比喻：</p>
+<blockquote>
+<p>汽车跑得比人快没有关系，但不能快到人类无法控制方向。</p>
+</blockquote>
+<p>因此，有效监督需要真正的专业判断能力：</p>
+<p>$$
+\text{Effective Human Control}
+\Rightarrow
+\text{Domain Expertise}
+$$</p>
+<p>而专业能力不能仅靠过去学过的知识维持，还需要持续参与前沿研究。</p>
+<p><strong>如果人类把所有研究都外包给 AI，最终可能连判断 AI 研究方向是否合理的能力都会失去。</strong></p>
+<p>这才是 Loh 认为人类数学家必须持续存在的重要原因。</p>
+<h2>五、AI 越强，人类研究者反而可能越重要？</h2>
+<p>Loh 进一步提出一个反直觉的预测：</p>
+<p>随着 AI 进入越来越多高风险领域，需要人类进行专业监督的关键环节也可能增加。</p>
+<p>例如：</p>
+<ul>
+<li>金融领域：监督 AI 的交易决策与风险管理。</li>
+<li>科学研究：判断 AI 提出的假设、实验及技术应用是否合理。</li>
+<li>网络安全：评估 AI 发现的新漏洞及其潜在危害。</li>
+<li>基础设施：监督 AI 对复杂物理系统的控制。</li>
+</ul>
+<p>其逻辑是：</p>
+<p>$$
+\text{AI Capability}\uparrow
+\Rightarrow
+\text{Critical Control Points}\uparrow
+\Rightarrow
+\text{Demand for Human Expertise}\uparrow
+$$</p>
+<p>当然，这只是一个有条件的预测，而非必然规律。</p>
+<p>未来也可能出现更成熟的自动化验证、AI 审计和安全机制，使部分监督工作不再需要人类直接参与。</p>
+<p>但 Loh 提醒我们：</p>
+<p><strong>不能因为 AI 具有强大的执行能力，就默认人类不再需要理解和监督这些系统。</strong></p>
+<h2>六、两篇文章的真正分歧与共识</h2>
+<p>Sanderson 与 Loh 实际上从两个不同层面重新定义了科学家的价值。</p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th></th>
+<th>Grant Sanderson</th>
+<th>Po-Shen Loh</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>核心问题</td>
+<td>AI 会证明之后，数学家还能做什么？</td>
+<td>AI 全面超越人类之后，为什么还需要数学家？</td>
+</tr>
+<tr>
+<td>核心观点</td>
+<td>数学的价值不只是证明，还有理解</td>
+<td>人类必须保留专业能力，才能引导 AI</td>
+</tr>
+<tr>
+<td>关注重点</td>
+<td>知识与理论的理解</td>
+<td>科研方向与决策控制</td>
+</tr>
+<tr>
+<td>对 AI 的态度</td>
+<td>AI 是发现工具，理解同样值得奖励</td>
+<td>AI 可以更聪明，但人类不能放弃判断权</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p>两者可以概括为：</p>
+<p><strong>Sanderson：从 Proof 转向 Understanding。</strong></p>
+<p><strong>Loh：从 Capability 转向 Human Agency。</strong></p>
+<p>前者关心我们能否理解科学知识，后者关心我们能否继续决定科学发展的方向。</p>
+<p>两篇文章并不意味着人类必须亲自完成所有研究，也没有证明 AI 永远无法获得真正的理解。</p>
+<p>它们共同指出：<strong>科学进步不能只用机器能够完成多少任务来衡量。</strong></p>
+<h2>七、进一步思考：AI for Science 应该追求什么？</h2>
+<p>这一讨论并不局限于数学，对整个 AI for Science 领域都有启发。</p>
+<p>今天，越来越多科研工作正在被 Benchmark 驱动：</p>
+<ul>
+<li>模型预测误差是否更低？</li>
+<li>是否解决了更多复杂任务？</li>
+<li>是否达到了新的 SOTA？</li>
+<li>是否能用更少的计算资源完成实验？</li>
+</ul>
+<p>这些指标当然重要，但它们未必等价于真正的科学理解。</p>
+<p>$$
+\text{Benchmark Performance}
+\neq
+\text{Scientific Understanding}
+$$</p>
+<p>例如，在物理动力学建模中，一个模型可能具有很高的预测精度，但我们仍然需要追问：</p>
+<ul>
+<li>为什么某种对称性归纳偏置有效？</li>
+<li>为什么模型能在训练分布之外泛化？</li>
+<li>哪些结构是真正必要的，哪些只是工程技巧？</li>
+<li>能否从实验现象中提炼出更一般的物理规律？</li>
+</ul>
+<p>这些问题不一定能通过简单地提高 Benchmark 分数来解决。</p>
+<p>进一步说，即使未来 AI 能够回答所有这些问题，人类仍然需要决定哪些研究值得投入资源、哪些应用应该受到约束，以及什么样的科学进步真正符合社会需要。</p>
+<p>因此，我更倾向于从四个维度理解科学进步：</p>
+<p>$$ \boxed{\text{Scientific Progress}=\text{Discovery}+\text{Verification}+\text{Understanding}+\text{Generalization}} $$</p>
+<p>这不是严格的数学等式，而是一个概念框架。</p>
+<p>未来，这四类任务都可能由人类与 AI 共同完成。</p>
+<p>真正值得改变的是：<strong>科研评价不能只奖励容易量化的发现结果，还应该认可验证、理解、理论统一和问题选择所带来的贡献。</strong></p>
+<h2>八、结语：AI 时代，科学家最重要的能力是什么？</h2>
+<p>这两篇文章提出了一个值得长期思考的问题：</p>
+<blockquote>
+<p>当机器越来越擅长给出答案，我们是否还能够判断什么问题值得回答？</p>
+</blockquote>
+<p>Sanderson 提醒我们，不要把证明等同于理解。</p>
+<p>Loh 则进一步提醒我们，不要把拥有强大工具等同于拥有真正的控制能力。</p>
+<p>二者共同指向一个结论：</p>
+<p><strong>AI 可以极大地扩展人类探索科学的能力，但科学研究最终应该服务于什么目标，仍然需要人类社会作出判断。</strong></p>
+<p>未来的优秀科学家，可能不再以亲自完成多少繁琐推导为主要竞争力，而是更需要具备提出重要问题、辨别关键假设、建立统一理论，以及评价 AI 研究成果的能力。</p>
+<p><strong>AI 时代真正值得担忧的，不是机器比人类更会思考，而是人类因为机器太会思考，最终放弃了独立思考。</strong></p>
+<hr>
+<h3>参考资料</h3>
+<ol>
+<li>Grant Sanderson, <a href="https://terrytao.wordpress.com/2026/09/18/if-math-is-more-than-proof-we-need-to-better-celebrate-the-rest-of-it/" rel="nofollow">If Math Is More Than Proof, We Need to Better Celebrate the Rest of It</a>, Terence Tao's Blog, 2026.</li>
+<li>Po-Shen Loh, <a href="https://terrytao.wordpress.com/2026/09/19/why-do-we-need-human-mathematicians-anymore/" rel="nofollow">Why Do We Need Human Mathematicians Anymore?</a>, Terence Tao's Blog, 2026.</li>
+<li>William P. Thurston, <a href="https://arxiv.org/abs/math/9404236" rel="nofollow">On Proof and Progress in Mathematics</a>, 1994.</li>
+</ol></div>
+<div style="font-size:small;margin-top:8px;float:right;"></div>
+
+<button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>
+<div class="comments" id="comments"></div>
+
+</div>
+    <div id="footer"><div id="footer1">Copyright © <span id="copyrightYear"></span> <a href="https://carolynwei.github.io">Wei_jc's Blog</a></div>
+<div id="footer2">
+    <span id="runday"></span><span>Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a></span>
+</div>
+
+<script>
+var now=new Date();
+document.getElementById("copyrightYear").innerHTML=now.getFullYear();
+
+if(""!=""){
+    var startSite=new Date("");
+    var diff=now.getTime()-startSite.getTime();
+    var diffDay=Math.floor(diff/(1000*60*60*24));
+    document.getElementById("runday").innerHTML="网站运行 "+diffDay+" 天"+" • ";
+}
+</script></div>
+</body>
+<script>
+var IconList={'sun': 'M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V.75A.75.75 0 018 0zm0 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM2.343 2.343a.75.75 0 011.061 0l1.06 1.061a.75.75 0 01-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zm9.193 9.193a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061l-1.061-1.06a.75.75 0 010-1.061zM16 8a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5A.75.75 0 0116 8zM3 8a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h1.5A.75.75 0 013 8zm10.657-5.657a.75.75 0 010 1.061l-1.061 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zm-9.193 9.193a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 11-1.061-1.06l1.06-1.061a.75.75 0 011.061 0z', 'moon': 'M9.598 1.591a.75.75 0 01.785-.175 7 7 0 11-8.967 8.967.75.75 0 01.961-.96 5.5 5.5 0 007.046-7.046.75.75 0 01.175-.786zm1.616 1.945a7 7 0 01-7.678 7.678 5.5 5.5 0 107.678-7.678z', 'sync': 'M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z', 'home': 'M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z', 'github': 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z'};
+var utterancesLoad=0;
+
+let themeSettings={
+    "dark": ["dark","moon","#00f0ff","dark-blue"],
+    "light": ["light","sun","#ff5000","github-light"],
+    "auto": ["auto","sync","","preferred-color-scheme"]
+};
+function changeTheme(mode, icon, color, utheme){
+    document.documentElement.setAttribute("data-color-mode",mode);
+    document.getElementById("themeSwitch").setAttribute("d",value=IconList[icon]);
+    document.getElementById("themeSwitch").parentNode.style.color=color;
+    if(utterancesLoad==1){utterancesTheme(utheme);}
+}
+function modeSwitch(){
+    let currentMode=document.documentElement.getAttribute('data-color-mode');
+    let newMode = currentMode === "light" ? "dark" : currentMode === "dark" ? "auto" : "light";
+    localStorage.setItem("meek_theme", newMode);
+    if(themeSettings[newMode]){
+        changeTheme(...themeSettings[newMode]);
+    }
+}
+function utterancesTheme(theme){
+    const message={type:'set-theme',theme: theme};
+    const iframe=document.getElementsByClassName('utterances-frame')[0];
+    iframe.contentWindow.postMessage(message,'https://utteranc.es');
+}
+if(themeSettings[theme]){changeTheme(...themeSettings[theme]);}
+console.log("\n %c Gmeek last https://github.com/Meekdai/Gmeek \n","padding:5px 0;background:#02d81d;color:#fff");
+</script>
+
+<script>
+document.getElementById("pathHome").setAttribute("d",IconList["home"]);
+document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
+
+
+
+function openComments(){
+    cm=document.getElementById("comments");
+    cmButton=document.getElementById("cmButton");
+    cmButton.disabled=true;
+    cmButton.innerHTML="loading";
+    span=document.createElement("span");
+    span.setAttribute("class","AnimatedEllipsis");
+    cmButton.appendChild(span);
+
+    script=document.createElement("script");
+    script.setAttribute("src","https://utteranc.es/client.js");
+    script.setAttribute("repo","carolynwei/carolynwei.github.io");
+    script.setAttribute("issue-term","title");
+    
+    if(localStorage.getItem("meek_theme")=="dark"){script.setAttribute("theme","dark-blue");}
+    else if(localStorage.getItem("meek_theme")=="light") {script.setAttribute("theme","github-light");}
+    else{script.setAttribute("theme","preferred-color-scheme");}
+    
+    script.setAttribute("crossorigin","anonymous");
+    script.setAttribute("async","");
+    cm.appendChild(script);
+
+    int=self.setInterval("iFrameLoading()",200);
+}
+
+function iFrameLoading(){
+    var utterances=document.getElementsByClassName('utterances');
+    if(utterances.length==1){
+        if(utterances[0].style.height!=""){
+            utterancesLoad=1;
+            int=window.clearInterval(int);
+            document.getElementById("cmButton").style.display="none";
+            console.log("utterances Load OK");
+        }
+    }
+}
+
+
+
+</script>
+<script>MathJax = {tex: {inlineMath: [["$", "$"]]}};</script><script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</html>
