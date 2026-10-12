@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html data-color-mode="light" data-dark-theme="dark" data-light-theme="light" lang="zh-CN">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
+    
+    <link rel="icon" href="https://avatars.githubusercontent.com/u/142194912?s=400&u=4e5006ad422aa3d5c4aa111fe6e1661b48cdb0d3&v=4"><script>
+        let theme = localStorage.getItem("meek_theme") || "light";
+        document.documentElement.setAttribute("data-color-mode", theme);
+    </script>
+<meta name="description" content="> **核心问题：如果一个问题没有唯一正确答案，我们应该如何评价大模型的回答，又如何利用这些评价让模型继续变强？**
+> 
+> 从 SuperCLUE-RAG、RAGAS 到 Rubrics as Rewards（RaR），再到 Chasing the Tail、QuRL 和 Online Rubrics，一条值得关注的研究路线正在形成：**从固定的多维评价，走向题目专属、具有区分度、能够动态调整的奖励标准。">
+<meta property="og:title" content="当大模型开始制定自己的评分标准：从 RAGAS 到 Rubrics as Rewards，重新理解 AI 强化学习">
+<meta property="og:description" content="> **核心问题：如果一个问题没有唯一正确答案，我们应该如何评价大模型的回答，又如何利用这些评价让模型继续变强？**
+> 
+> 从 SuperCLUE-RAG、RAGAS 到 Rubrics as Rewards（RaR），再到 Chasing the Tail、QuRL 和 Online Rubrics，一条值得关注的研究路线正在形成：**从固定的多维评价，走向题目专属、具有区分度、能够动态调整的奖励标准。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://carolynwei.github.io/post/dang-da-mo-xing-kai-shi-zhi-ding-zi-ji-de-ping-fen-biao-zhun-%EF%BC%9A-cong-%20RAGAS%20-dao-%20Rubrics%20as%20Rewards%EF%BC%8C-zhong-xin-li-jie-%20AI%20-qiang-hua-xue-xi.html">
+<meta property="og:image" content="https://avatars.githubusercontent.com/u/142194912?s=400&u=4e5006ad422aa3d5c4aa111fe6e1661b48cdb0d3&v=4">
+<title>当大模型开始制定自己的评分标准：从 RAGAS 到 Rubrics as Rewards，重新理解 AI 强化学习</title>
+
+
+
+</head>
+<style>
+body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;padding: 45px;font-size: 16px;font-family: sans-serif;line-height: 1.25;}
+#header{display:flex;padding-bottom:8px;border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted));margin-bottom: 16px;}
+#footer {margin-top:64px; text-align: center;font-size: small;}
+
+</style>
+
+<style>
+.postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
+.title-right{display:flex;margin:auto 0 0 auto;}
+.title-right .circle{padding: 14px 16px;margin-right:8px;}
+#postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
+#postBody hr{height:2px;}
+#cmButton{height:48px;margin-top:48px;}
+#comments{margin-top:64px;}
+.g-emoji{font-size:24px;}
+@media (max-width: 600px) {
+    body {padding: 8px;}
+    .postTitle{font-size:24px;}
+}
+
+</style>
+
+
+
+
+<body>
+    <div id="header">
+<h1 class="postTitle">当大模型开始制定自己的评分标准：从 RAGAS 到 Rubrics as Rewards，重新理解 AI 强化学习</h1>
+<div class="title-right">
+    <a href="https://carolynwei.github.io" id="buttonHome" class="btn btn-invisible circle" title="首页">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathHome" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+    <a href="https://github.com/carolynwei/carolynwei.github.io/issues/12" target="_blank" class="btn btn-invisible circle" title="Issue">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathIssue" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+
+    <a class="btn btn-invisible circle" onclick="modeSwitch();" title="切换主题">
+        <svg class="octicon" width="16" height="16" >
+            <path id="themeSwitch" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+
+</div>
+</div>
+    
+<!-- reading-time-start -->
+<div
+    class="reading-time"
+    style="
+        margin: -6px 0 22px 0;
+        font-size: 14px;
+        color: var(--color-fg-muted);
+        opacity: 0.85;
+    "
+>
+    ⏱ 约 33 分钟读完
+</div>
+<!-- reading-time-end -->
+
+<div id="content">
+<div class="markdown-body" id="postBody"><blockquote>
+<p><strong>核心问题：如果一个问题没有唯一正确答案，我们应该如何评价大模型的回答，又如何利用这些评价让模型继续变强？</strong></p>
+<p>从 SuperCLUE-RAG、RAGAS 到 Rubrics as Rewards（RaR），再到 Chasing the Tail、QuRL 和 Online Rubrics，一条值得关注的研究路线正在形成：<strong>从固定的多维评价，走向题目专属、具有区分度、能够动态调整的奖励标准。</strong></p>
+</blockquote>
+<h2>1. 为什么大模型需要更好的奖励标准？</h2>
+<p>强化学习在数学、代码等任务上已经展现出很强的能力，其中一个重要原因是：<strong>答案虽然难以生成，却相对容易验证。</strong></p>
+<p>例如，数学题可以检查最终答案是否正确，代码任务可以运行测试用例。</p>
+<p>这就是 RLVR（Reinforcement Learning with Verifiable Rewards）的基本思想：</p>
+<p>$$
+R(x,y)=
+\begin{cases}
+1, &amp; \text{答案正确}\\
+0, &amp; \text{答案错误}
+\end{cases}
+$$</p>
+<p>但开放式任务不同。</p>
+<p>例如：</p>
+<blockquote>
+<p>请分析一家公司的经营状况，并判断其长期竞争优势。</p>
+</blockquote>
+<p>一个高质量回答可能需要兼顾事实准确性、逻辑合理性、信息完整性与证据支持。即使两个回答都没有明显错误，质量也可能相差很大。</p>
+<p>传统做法是让 LLM Judge 直接给出整体评分，但这种方式容易受到回答长度、表达风格等因素影响，也难以发现细微的事实与推理问题。</p>
+<p><strong>于是，一个自然的想法是：与其直接判断答案好不好，不如先明确什么样的答案才算好。</strong></p>
+<p>这就是 Rubrics（评分规程）的核心思想。</p>
+<h2>2. Rubrics 并不是新概念：从 RAGAS 到 SuperCLUE-RAG</h2>
+<p>事实上，细粒度评价早已出现在经典的 RAG 评测体系中。</p>
+<p>例如：</p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>框架</th>
+<th>核心思想</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[<a href="https://aclanthology.org/2024.eacl-demo.16/" rel="nofollow">RAGAS</a>](<a href="https://aclanthology.org/2024.eacl-demo.16/" rel="nofollow">https://aclanthology.org/2024.eacl-demo.16/</a>)</td>
+<td>将 RAG 质量拆分为 Faithfulness、Answer Relevancy、Context Precision 等指标</td>
+</tr>
+<tr>
+<td>[<a href="https://github.com/CLUEbenchmark/SuperCLUE-RAG">SuperCLUE-RAG</a>](<a href="https://github.com/CLUEbenchmark/SuperCLUE-RAG">https://github.com/CLUEbenchmark/SuperCLUE-RAG</a>)</td>
+<td>从答案规整度、准确度、信息提炼度、文本对齐度等维度评价中文 RAG</td>
+</tr>
+<tr>
+<td>[<a href="https://aclanthology.org/2024.naacl-long.20/" rel="nofollow">ARES</a>](<a href="https://aclanthology.org/2024.naacl-long.20/" rel="nofollow">https://aclanthology.org/2024.naacl-long.20/</a>)</td>
+<td>训练轻量化 Judge，并利用人工数据进行统计校正</td>
+</tr>
+<tr>
+<td>[<a href="https://arxiv.org/abs/2407.11005" rel="nofollow">RAGBench</a>](<a href="https://arxiv.org/abs/2407.11005" rel="nofollow">https://arxiv.org/abs/2407.11005</a>)</td>
+<td>使用 TRACe 等细粒度标准，诊断证据利用、忠实性和完整性问题</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p>这些框架的共同思想是：</p>
+<p><strong>将复杂的整体评价拆解成多个更容易判断的子任务。</strong></p>
+<p>例如，RAGAS 的 Faithfulness 可以近似表示为：</p>
+<p>$$
+F=
+\frac{\text{有证据支持的事实陈述数}}
+{\text{回答中的事实陈述总数}}
+$$</p>
+<p>但通用指标仍然存在局限。</p>
+<p>假设问题是：</p>
+<blockquote>
+<p>某公司 2024 年营收增长的主要原因是什么？</p>
+</blockquote>
+<p>仅使用 Faithfulness 无法充分判断回答是否遗漏了关键业务、是否混淆同比与环比，或者是否正确解释增长来源。</p>
+<p>因为这些要求与具体问题有关。</p>
+<p>由此引出一个重要区别：</p>
+<ul>
+<li><strong>通用指标</strong>：什么是好回答？</li>
+<li><strong>题目专属 Rubrics</strong>：对于这道题，什么才算好回答？</li>
+</ul>
+<p>后者正是 Rubrics as Rewards 的切入点。</p>
+<h2>3. Rubrics as Rewards：让评分标准成为强化学习奖励</h2>
+<p>论文：[<a href="https://arxiv.org/abs/2507.17746" rel="nofollow">Rubrics as Rewards: Reinforcement Learning Beyond Verifiable Domains</a>](<a href="https://arxiv.org/abs/2507.17746)%EF%BC%88ICLR" rel="nofollow">https://arxiv.org/abs/2507.17746)（ICLR</a> 2026）</p>
+<h3>核心方法</h3>
+<p>RaR 为每个问题生成一套具体 Rubrics，再通过 LLM Judge 评价模型回答，并将评分用于 GRPO 训练。</p>
+<p>整体流程如下：</p>
+<p><strong>问题 + 参考答案 → Rubrics 生成 → Policy 采样回答 → Judge 评分 → GRPO 更新</strong></p>
+<p>例如，面对医学诊断问题，Rubrics 可以要求：</p>
+<ul>
+<li>是否识别需要紧急排查的疾病？</li>
+<li>是否说明关键诊断依据？</li>
+<li>是否提出合理的后续检查？</li>
+<li>是否避免危险或缺乏依据的建议？</li>
+</ul>
+<p>论文提出四项 Rubrics 设计原则：</p>
+<ol>
+<li><strong>Expert Grounding</strong>：由专家知识或高质量参考答案提供依据。</li>
+<li><strong>Comprehensive Coverage</strong>：覆盖重要的评价维度。</li>
+<li><strong>Criterion Importance</strong>：区分不同标准的重要性。</li>
+<li><strong>Self-Contained Evaluation</strong>：每条标准清晰具体，便于独立判断。</li>
+</ol>
+<h3>两种奖励聚合方式</h3>
+<p><strong>Explicit Aggregation：逐项评分后加权求和。</strong></p>
+<p>$$
+R(x,y)=
+\frac{\sum_{j=1}^{K}w_jc_j(x,y)}
+{\sum_{j=1}^{K}w_j}
+$$</p>
+<p>其中，$c_j$ 表示第 $j$ 项标准是否满足，$w_j$ 是对应权重。</p>
+<p>这种方法可解释性强，但难以表达不同标准之间的复杂关联。</p>
+<p><strong>Implicit Aggregation：将全部 Rubrics 提供给 Judge，让其综合评分。</strong></p>
+<p>$$
+R(x,y)=f_{\phi}(x,y,\mathcal R_x)
+$$</p>
+<p>其中，$\mathcal R_x$ 是针对问题 $x$ 的评分标准集合。</p>
+<p>论文发现，Implicit Aggregation 整体效果更好。</p>
+<p>一个合理的解释是：<strong>评分标准适合明确评价维度，但最终质量未必能通过简单线性加权表示。</strong></p>
+<h3>实验揭示了什么？</h3>
+<p>在论文报告的一组 HealthBench 实验中：</p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>训练方式</th>
+<th>得分</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Direct Likert</td>
+<td>23.9%</td>
+</tr>
+<tr>
+<td>Reference Likert</td>
+<td>31.7%</td>
+</tr>
+<tr>
+<td>RaR：无参考答案的合成 Rubrics</td>
+<td>32.0%</td>
+</tr>
+<tr>
+<td>RaR：有参考答案的合成 Rubrics</td>
+<td>35.9%</td>
+</tr>
+<tr>
+<td>RaR：人工 Rubrics</td>
+<td>34.8%</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p>这说明三个问题：</p>
+<ul>
+<li>结构化 Rubrics 相比笼统打分具有明显价值。</li>
+<li>即使没有参考答案，合成 Rubrics 也能提供有效监督。</li>
+<li>高质量参考知识仍有助于提高奖励质量。</li>
+</ul>
+<p>值得注意的是，论文发现较小的 Judge 在获得 Rubrics 后也能取得不错的评分效果。</p>
+<p><strong>这意味着，提高奖励质量不一定需要更强的 Reward Model，也可以通过改善评价任务本身来实现。</strong></p>
+<p>不过，RaR 并没有证明模型可以完全独立、自主地无限提升。Rubrics 仍然可能依赖高质量参考答案或更强模型生成。</p>
+<p>它更接近一种利用现有模型知识的 <strong>Self-Bootstrapping</strong>：通过结构化标准，让模型已有的评价能力得到更充分的利用。</p>
+<h2>4. Chasing the Tail：为什么奖励模型最需要区分优秀答案？</h2>
+<p>论文：[<a href="https://proceedings.iclr.cc/paper_files/paper/2026/hash/d8183233dbb325a7e165909042a47e15-Abstract-Conference.html" rel="nofollow">Chasing the Tail</a>](<a href="https://proceedings.iclr.cc/paper_files/paper/2026/hash/d8183233dbb325a7e165909042a47e15-Abstract-Conference.html)%EF%BC%88ICLR" rel="nofollow">https://proceedings.iclr.cc/paper_files/paper/2026/hash/d8183233dbb325a7e165909042a47e15-Abstract-Conference.html)（ICLR</a> 2026）</p>
+<p>RaR 证明 Rubrics 可以作为奖励，但还有一个问题：</p>
+<blockquote>
+<p>如果 Rubrics 能区分好答案和坏答案，却无法区分优秀答案与顶尖答案，会发生什么？</p>
+</blockquote>
+<p>答案是：<strong>Reward Over-optimization。</strong></p>
+<p>在强化学习中，Policy 会倾向于选择奖励更高的回答。</p>
+<p>考虑 KL 正则化的强化学习目标：</p>
+<p>$$
+\max_{\pi}
+\mathbb E_{y\sim\pi}[R(x,y)]
+-\beta D_{\mathrm{KL}}(\pi\Vert\pi_0)
+$$</p>
+<p>对应的最优策略具有形式：</p>
+<p>$$
+\pi^*(y\mid x)
+\propto
+\pi_0(y\mid x)
+\exp\left(\frac{R(x,y)}{\beta}\right)
+$$</p>
+<p>这意味着，高奖励回答的概率会被指数放大。</p>
+<p>假设两个回答的真实质量分别为：</p>
+<ul>
+<li>回答 A：95 分</li>
+<li>回答 B：98 分</li>
+</ul>
+<p>但 Reward Model 错误地认为 A 比 B 更好。</p>
+<p>那么 RL 可能不断强化 A，即使 B 才是真正更好的回答。</p>
+<p><strong>关键问题不是 Reward Model 在全部回答上的平均准确率，而是它在高质量回答区域的排序能力。</strong></p>
+<p>论文提出 Refinement-through-Differentiation（RTD）：</p>
+<ol>
+<li>收集多个高质量回答。</li>
+<li>比较优秀回答之间的细微差异。</li>
+<li>提取真正影响质量的关键标准。</li>
+<li>将这些标准补充进 Rubrics。</li>
+</ol>
+<p>这带来了一个很重要的认识：</p>
+<p><strong>随着 Policy 变强，奖励模型需要提高的不只是判断能力，更是高质量区域的分辨率。</strong></p>
+<p>这也是为什么 Rubrics 不能只停留在“有没有明显错误”这一层。</p>
+<h2>5. QuRL：能否利用外部知识自动生成 Rubrics？</h2>
+<p>论文：[<a href="https://proceedings.iclr.cc/paper_files/paper/2026/hash/aef34c770664d06eabdfebc5d3d58a9c-Abstract-Conference.html" rel="nofollow">QuRL: Rubrics As Judge for Open-Ended Question Answering</a>](<a href="https://proceedings.iclr.cc/paper_files/paper/2026/hash/aef34c770664d06eabdfebc5d3d58a9c-Abstract-Conference.html)%EF%BC%88ICLR" rel="nofollow">https://proceedings.iclr.cc/paper_files/paper/2026/hash/aef34c770664d06eabdfebc5d3d58a9c-Abstract-Conference.html)（ICLR</a> 2026）</p>
+<p>RaR 通常使用参考答案帮助生成 Rubrics，但高质量参考答案本身也可能昂贵。</p>
+<p>QuRL 提出另一条路线：</p>
+<p><strong>利用互联网中的高质量资料，自动构造题目专属 Rubrics。</strong></p>
+<p>核心流程：</p>
+<p>$$
+\text{Question}
+\rightarrow
+\text{Retrieval}
+\rightarrow
+\text{Knowledge Extraction}
+\rightarrow
+\text{Rubrics}
+\rightarrow
+\text{RL}
+$$</p>
+<p>具体包含：</p>
+<ul>
+<li><strong>Web Retrieval</strong>：检索与问题相关的外部资料。</li>
+<li><strong>Meta-Description</strong>：提取真正有用的事实和表达信息。</li>
+<li><strong>Rubric Generation</strong>：生成题目专属标准。</li>
+<li><strong>Rubric Filtering</strong>：筛除缺乏区分度或质量不佳的标准。</li>
+<li><strong>GRPO</strong>：使用 Rubrics 奖励训练模型。</li>
+</ul>
+<p>它与 RAG 有一个有趣的区别：</p>
+<p><strong>普通 RAG 检索知识帮助模型回答问题，QuRL 检索知识帮助系统判断什么是好回答。</strong></p>
+<p>论文的消融实验也表明，外部知识和 Rubric Filtering 都会影响最终表现。</p>
+<p>不过，QuRL 仍然依赖检索资料的可靠性。外部信息若存在错误，Rubrics 也可能继承这些错误。</p>
+<p>因此，它降低了人工构造标准的成本，却没有完全解决监督信号的可信度问题。</p>
+<h2>6. Online Rubrics：评分标准为什么不能随着模型变化？</h2>
+<p>论文：[<a href="https://proceedings.mlr.press/v306/rezaei26a.html" rel="nofollow">Online Rubrics Elicitation</a>](<a href="https://proceedings.mlr.press/v306/rezaei26a.html)%EF%BC%88ICML" rel="nofollow">https://proceedings.mlr.press/v306/rezaei26a.html)（ICML</a> 2026）</p>
+<p>前面的方法还有一个共同局限：</p>
+<p><strong>Rubrics 通常预先生成，而 Policy 在训练过程中不断变化。</strong></p>
+<p>训练初期，模型可能出现明显的事实错误；训练后期，模型逐渐学会满足现有标准，却可能出现新的问题，例如机械迎合 Rubrics、增加无关细节，或利用 Judge 的评分偏好。</p>
+<p>此时：</p>
+<p>$$
+R_{\mathrm{proxy}}\uparrow
+\quad\not\Rightarrow\quad
+R_{\mathrm{true}}\uparrow
+$$</p>
+<p>为了解决这一问题，Online Rubrics 提出了动态评价标准。</p>
+<p>核心方法是 <strong>Pairwise Elicitation</strong>：</p>
+<p>比较当前 Policy 与对照 Policy 生成的回答：</p>
+<p>$$
+y_{\mathrm{current}}\sim\pi_{\theta}
+$$</p>
+<p>$$
+y_{\mathrm{control}}\sim\pi_{\mathrm{control}}
+$$</p>
+<p>然后从两者差异中提取新的 Rubrics：</p>
+<p>$$ \Delta\mathcal R_t=E(x,y_{\mathrm{current}},y_{\mathrm{control}}) $$</p>
+<p>再经过筛选、去重，补充到原有评分标准中。</p>
+<p>这种方法可以发现模型当前出现、但原有 Rubrics 没有覆盖的问题。</p>
+<p>与 Chasing the Tail 相比：</p>
+<ul>
+<li><strong>Chasing the Tail</strong>：重点关注高质量回答之间的区分。</li>
+<li><strong>Online Rubrics</strong>：重点关注训练过程中不断变化的评价需求。</li>
+</ul>
+<p>两者可以互补：前者提高高质量区域的评分精度，后者让评分标准适应新的 Policy 分布。</p>
+<p>但动态增加 Rubrics 也不保证奖励一定变好，新标准仍需要质量控制。</p>
+<h2>7. 四篇论文构成了一条怎样的研究路线？</h2>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>论文</th>
+<th>核心问题</th>
+<th>主要思想</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rubrics as Rewards</td>
+<td>如何为开放式任务提供奖励？</td>
+<td>生成题目专属 Rubrics</td>
+</tr>
+<tr>
+<td>Chasing the Tail</td>
+<td>如何避免高质量回答排序错误？</td>
+<td>细化高质量回答之间的评分标准</td>
+</tr>
+<tr>
+<td>QuRL</td>
+<td>如何低成本获得有依据的 Rubrics？</td>
+<td>外部检索、知识提取与标准过滤</td>
+</tr>
+<tr>
+<td>Online Rubrics</td>
+<td>如何让奖励适应不断变化的 Policy？</td>
+<td>动态发现和补充评价标准</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p>这四篇论文不完全是时间上依次继承的关系，而是分别处理 Rubric-based Reward Modeling 的不同挑战。</p>
+<p>综合起来，可以得到一个值得研究的框架：</p>
+<p>$$
+\boxed{
+\text{Evidence Grounding}
++
+\text{Fine-grained Rubrics}
++
+\text{Tail Discrimination}
++
+\text{Online Adaptation}
+}
+$$</p>
+<p>即：</p>
+<ul>
+<li>通过可信证据约束评价标准。</li>
+<li>用题目专属 Rubrics 明确质量要求。</li>
+<li>在高质量回答之间保持足够的区分度。</li>
+<li>随着 Policy 变化动态修订标准。</li>
+</ul>
+<p>相比固定的一套通用指标，这种评价系统更有机会适应开放式任务中的复杂质量差异。</p>
+<p>但它也更复杂，并带来了额外的计算成本和奖励可靠性问题。</p>
+<h2>8. 一个值得探索的方向：可验证奖励与 Rubrics 结合</h2>
+<p>并非所有任务都完全不可验证。</p>
+<p>例如，搜索相关性分档通常有明确的人工标注，但具体推理还涉及查询理解、实体消歧、证据匹配和逻辑一致性。</p>
+<p>这种任务既可以评价最终标签，又需要评价推理质量。</p>
+<p>因此，可以考虑构造混合奖励：</p>
+<p>$$
+R_t=
+\lambda R_{\mathrm{label}}
++
+(1-\lambda)R_{\mathrm{rubric},t}
+$$</p>
+<p>其中：</p>
+<ul>
+<li>
+$R_{\mathrm{label}}$：根据标准标签判断最终结果是否正确。</li>
+<li>
+$R_{\mathrm{rubric},t}$：使用动态 Rubrics 评价证据和推理质量。</li>
+</ul>
+<p>例如，对于“苹果公司”与“苹果种植”的相关性判断，Rubrics 可以检查模型是否正确处理实体歧义，避免将词汇重合误判为语义相关。</p>
+<p>这种方案结合了 RLVR 的客观性与 Rubrics 的灵活性。</p>
+<p>但有一个重要前提：<strong>推理看起来合理，不代表推理一定正确。</strong></p>
+<p>如果模型只是学会生成符合 Judge 偏好的 CoT，即使 Rubric Reward 提高，真实判断能力也未必改善。</p>
+<p>因此，必须通过独立标签、人工评测和分布外测试，验证混合奖励是否带来了真实的泛化收益。</p>
+<h2>9. 总结：大模型真正需要的是更强的 Judge，还是更好的评价问题？</h2>
+<p>回顾这些工作，可以看到一条清晰的思想演进：</p>
+<p>$$
+\text{通用多维评价}
+\rightarrow
+\text{题目专属评价}
+\rightarrow
+\text{高质量区分}
+\rightarrow
+\text{动态评价}
+$$</p>
+<p>最值得思考的是：</p>
+<p><strong>一个模型不擅长直接判断回答质量，并不意味着它完全没有能力识别回答中的具体错误。</strong></p>
+<p>通过合理的 Rubrics，我们可以将复杂判断拆解为更明确的子任务，从而更充分地利用现有模型的知识和评价能力。</p>
+<p>这解释了为什么较小的 Judge 也可能产生有用的训练信号，也解释了为什么提高奖励质量并不总是意味着增加模型参数量。</p>
+<p>但 Rubrics 不是解决奖励问题的终点。它仍然可能遗漏重要标准、继承外部知识错误，或者被不断优化的 Policy 利用。</p>
+<p>因此，我认为未来更有价值的研究问题是：</p>
+<blockquote>
+<p><strong>我们能否构建一个由可信证据约束、能够区分高质量回答，并随着模型能力提升而持续完善的奖励系统？</strong></p>
+</blockquote>
+<p>从这个角度看，Rubrics 的意义已经不只是设计更详细的评分表，而是在探索如何把模型已有的知识和判断能力，转化为更加可靠的学习信号。</p>
+<hr>
+<h2>参考论文</h2>
+<ol>
+<li>[<a href="https://arxiv.org/abs/2507.17746" rel="nofollow">Rubrics as Rewards: Reinforcement Learning Beyond Verifiable Domains</a>](<a href="https://arxiv.org/abs/2507.17746)%EF%BC%8CICLR" rel="nofollow">https://arxiv.org/abs/2507.17746)，ICLR</a> 2026.</li>
+<li>[<a href="https://proceedings.iclr.cc/paper_files/paper/2026/hash/d8183233dbb325a7e165909042a47e15-Abstract-Conference.html" rel="nofollow">Chasing the Tail</a>](<a href="https://proceedings.iclr.cc/paper_files/paper/2026/hash/d8183233dbb325a7e165909042a47e15-Abstract-Conference.html)%EF%BC%8CICLR" rel="nofollow">https://proceedings.iclr.cc/paper_files/paper/2026/hash/d8183233dbb325a7e165909042a47e15-Abstract-Conference.html)，ICLR</a> 2026.</li>
+<li>[<a href="https://proceedings.iclr.cc/paper_files/paper/2026/hash/aef34c770664d06eabdfebc5d3d58a9c-Abstract-Conference.html" rel="nofollow">QuRL: Rubrics As Judge for Open-Ended Question Answering</a>](<a href="https://proceedings.iclr.cc/paper_files/paper/2026/hash/aef34c770664d06eabdfebc5d3d58a9c-Abstract-Conference.html)%EF%BC%8CICLR" rel="nofollow">https://proceedings.iclr.cc/paper_files/paper/2026/hash/aef34c770664d06eabdfebc5d3d58a9c-Abstract-Conference.html)，ICLR</a> 2026.</li>
+<li>[<a href="https://proceedings.mlr.press/v306/rezaei26a.html" rel="nofollow">Online Rubrics Elicitation</a>](<a href="https://proceedings.mlr.press/v306/rezaei26a.html)%EF%BC%8CICML" rel="nofollow">https://proceedings.mlr.press/v306/rezaei26a.html)，ICML</a> 2026.</li>
+<li>[<a href="https://aclanthology.org/2024.eacl-demo.16/" rel="nofollow">RAGAS: Automated Evaluation of Retrieval Augmented Generation</a>](<a href="https://aclanthology.org/2024.eacl-demo.16/)%EF%BC%8CEACL" rel="nofollow">https://aclanthology.org/2024.eacl-demo.16/)，EACL</a> 2024.</li>
+<li>[<a href="https://aclanthology.org/2024.naacl-long.20/" rel="nofollow">ARES: An Automated Evaluation Framework for Retrieval-Augmented Generation Systems</a>](<a href="https://aclanthology.org/2024.naacl-long.20/)%EF%BC%8CNAACL" rel="nofollow">https://aclanthology.org/2024.naacl-long.20/)，NAACL</a> 2024.</li>
+<li>[<a href="https://arxiv.org/abs/2407.11005" rel="nofollow">RAGBench</a>](<a href="https://arxiv.org/abs/2407.11005)%EF%BC%8C2024" rel="nofollow">https://arxiv.org/abs/2407.11005)，2024</a>.</li>
+<li>[<a href="https://github.com/CLUEbenchmark/SuperCLUE-RAG">SuperCLUE-RAG</a>](<a href="https://github.com/CLUEbenchmark/SuperCLUE-RAG)%EF%BC%8C2024">https://github.com/CLUEbenchmark/SuperCLUE-RAG)，2024</a>.</li>
+</ol></div>
+<div style="font-size:small;margin-top:8px;float:right;"></div>
+
+<button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>
+<div class="comments" id="comments"></div>
+
+</div>
+    <div id="footer"><div id="footer1">Copyright © <span id="copyrightYear"></span> <a href="https://carolynwei.github.io">Wei_jc's Blog</a></div>
+<div id="footer2">
+    <span id="runday"></span><span>Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a></span>
+</div>
+
+<script>
+var now=new Date();
+document.getElementById("copyrightYear").innerHTML=now.getFullYear();
+
+if(""!=""){
+    var startSite=new Date("");
+    var diff=now.getTime()-startSite.getTime();
+    var diffDay=Math.floor(diff/(1000*60*60*24));
+    document.getElementById("runday").innerHTML="网站运行 "+diffDay+" 天"+" • ";
+}
+</script></div>
+</body>
+<script>
+var IconList={'sun': 'M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V.75A.75.75 0 018 0zm0 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM2.343 2.343a.75.75 0 011.061 0l1.06 1.061a.75.75 0 01-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zm9.193 9.193a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061l-1.061-1.06a.75.75 0 010-1.061zM16 8a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5A.75.75 0 0116 8zM3 8a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h1.5A.75.75 0 013 8zm10.657-5.657a.75.75 0 010 1.061l-1.061 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zm-9.193 9.193a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 11-1.061-1.06l1.06-1.061a.75.75 0 011.061 0z', 'moon': 'M9.598 1.591a.75.75 0 01.785-.175 7 7 0 11-8.967 8.967.75.75 0 01.961-.96 5.5 5.5 0 007.046-7.046.75.75 0 01.175-.786zm1.616 1.945a7 7 0 01-7.678 7.678 5.5 5.5 0 107.678-7.678z', 'sync': 'M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z', 'home': 'M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z', 'github': 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z'};
+var utterancesLoad=0;
+
+let themeSettings={
+    "dark": ["dark","moon","#00f0ff","dark-blue"],
+    "light": ["light","sun","#ff5000","github-light"],
+    "auto": ["auto","sync","","preferred-color-scheme"]
+};
+function changeTheme(mode, icon, color, utheme){
+    document.documentElement.setAttribute("data-color-mode",mode);
+    document.getElementById("themeSwitch").setAttribute("d",value=IconList[icon]);
+    document.getElementById("themeSwitch").parentNode.style.color=color;
+    if(utterancesLoad==1){utterancesTheme(utheme);}
+}
+function modeSwitch(){
+    let currentMode=document.documentElement.getAttribute('data-color-mode');
+    let newMode = currentMode === "light" ? "dark" : currentMode === "dark" ? "auto" : "light";
+    localStorage.setItem("meek_theme", newMode);
+    if(themeSettings[newMode]){
+        changeTheme(...themeSettings[newMode]);
+    }
+}
+function utterancesTheme(theme){
+    const message={type:'set-theme',theme: theme};
+    const iframe=document.getElementsByClassName('utterances-frame')[0];
+    iframe.contentWindow.postMessage(message,'https://utteranc.es');
+}
+if(themeSettings[theme]){changeTheme(...themeSettings[theme]);}
+console.log("\n %c Gmeek last https://github.com/Meekdai/Gmeek \n","padding:5px 0;background:#02d81d;color:#fff");
+</script>
+
+<script>
+document.getElementById("pathHome").setAttribute("d",IconList["home"]);
+document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
+
+
+
+function openComments(){
+    cm=document.getElementById("comments");
+    cmButton=document.getElementById("cmButton");
+    cmButton.disabled=true;
+    cmButton.innerHTML="loading";
+    span=document.createElement("span");
+    span.setAttribute("class","AnimatedEllipsis");
+    cmButton.appendChild(span);
+
+    script=document.createElement("script");
+    script.setAttribute("src","https://utteranc.es/client.js");
+    script.setAttribute("repo","carolynwei/carolynwei.github.io");
+    script.setAttribute("issue-term","title");
+    
+    if(localStorage.getItem("meek_theme")=="dark"){script.setAttribute("theme","dark-blue");}
+    else if(localStorage.getItem("meek_theme")=="light") {script.setAttribute("theme","github-light");}
+    else{script.setAttribute("theme","preferred-color-scheme");}
+    
+    script.setAttribute("crossorigin","anonymous");
+    script.setAttribute("async","");
+    cm.appendChild(script);
+
+    int=self.setInterval("iFrameLoading()",200);
+}
+
+function iFrameLoading(){
+    var utterances=document.getElementsByClassName('utterances');
+    if(utterances.length==1){
+        if(utterances[0].style.height!=""){
+            utterancesLoad=1;
+            int=window.clearInterval(int);
+            document.getElementById("cmButton").style.display="none";
+            console.log("utterances Load OK");
+        }
+    }
+}
+
+
+
+</script>
+<script>MathJax = {tex: {inlineMath: [["$", "$"]]}};</script><script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</html>
