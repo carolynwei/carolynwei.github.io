@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html data-color-mode="light" data-dark-theme="dark" data-light-theme="light" lang="zh-CN">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
+    
+    <link rel="icon" href="https://avatars.githubusercontent.com/u/142194912?s=400&u=4e5006ad422aa3d5c4aa111fe6e1661b48cdb0d3&v=4"><script>
+        let theme = localStorage.getItem("meek_theme") || "light";
+        document.documentElement.setAttribute("data-color-mode", theme);
+    </script>
+<meta name="description" content="> Transformer 真正重要的创新，不只是提出了一种新的神经网络，而是重新思考了三个基础问题：**信息如何在不同位置之间交互？一个位置的特征如何被加工？深层网络如何持续保存和更新这些信息？**
+>
+> 从这个角度看，Attention、FFN、Residual Connection、Positional Encoding 等设计并不是毫无关联的模块拼接，而是一套相互配合的计算机制。">
+<meta property="og:title" content="深入理解 Transformer：从设计哲学、数学原理到现代架构演进">
+<meta property="og:description" content="> Transformer 真正重要的创新，不只是提出了一种新的神经网络，而是重新思考了三个基础问题：**信息如何在不同位置之间交互？一个位置的特征如何被加工？深层网络如何持续保存和更新这些信息？**
+>
+> 从这个角度看，Attention、FFN、Residual Connection、Positional Encoding 等设计并不是毫无关联的模块拼接，而是一套相互配合的计算机制。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://carolynwei.github.io/post/shen-ru-li-jie-%20Transformer%EF%BC%9A-cong-she-ji-zhe-xue-%E3%80%81-shu-xue-yuan-li-dao-xian-dai-jia-gou-yan-jin.html">
+<meta property="og:image" content="https://avatars.githubusercontent.com/u/142194912?s=400&u=4e5006ad422aa3d5c4aa111fe6e1661b48cdb0d3&v=4">
+<title>深入理解 Transformer：从设计哲学、数学原理到现代架构演进</title>
+
+
+
+</head>
+<style>
+body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;padding: 45px;font-size: 16px;font-family: sans-serif;line-height: 1.25;}
+#header{display:flex;padding-bottom:8px;border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted));margin-bottom: 16px;}
+#footer {margin-top:64px; text-align: center;font-size: small;}
+
+</style>
+
+<style>
+.postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
+.title-right{display:flex;margin:auto 0 0 auto;}
+.title-right .circle{padding: 14px 16px;margin-right:8px;}
+#postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
+#postBody hr{height:2px;}
+#cmButton{height:48px;margin-top:48px;}
+#comments{margin-top:64px;}
+.g-emoji{font-size:24px;}
+@media (max-width: 600px) {
+    body {padding: 8px;}
+    .postTitle{font-size:24px;}
+}
+
+</style>
+
+
+
+
+<body>
+    <div id="header">
+<h1 class="postTitle">深入理解 Transformer：从设计哲学、数学原理到现代架构演进</h1>
+<div class="title-right">
+    <a href="https://carolynwei.github.io" id="buttonHome" class="btn btn-invisible circle" title="首页">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathHome" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+    <a href="https://github.com/carolynwei/carolynwei.github.io/issues/13" target="_blank" class="btn btn-invisible circle" title="Issue">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathIssue" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+
+    <a class="btn btn-invisible circle" onclick="modeSwitch();" title="切换主题">
+        <svg class="octicon" width="16" height="16" >
+            <path id="themeSwitch" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+
+</div>
+</div>
+    
+<!-- reading-time-start -->
+<div
+    class="reading-time"
+    style="
+        margin: -6px 0 22px 0;
+        font-size: 14px;
+        color: var(--color-fg-muted);
+        opacity: 0.85;
+    "
+>
+    ⏱ 约 80 分钟读完
+</div>
+<!-- reading-time-end -->
+
+<div id="content">
+<div class="markdown-body" id="postBody"><blockquote>
+<p>Transformer 真正重要的创新，不只是提出了一种新的神经网络，而是重新思考了三个基础问题：<strong>信息如何在不同位置之间交互？一个位置的特征如何被加工？深层网络如何持续保存和更新这些信息？</strong></p>
+<p>从这个角度看，Attention、FFN、Residual Connection、Positional Encoding 等设计并不是毫无关联的模块拼接，而是一套相互配合的计算机制。</p>
+</blockquote>
+<h2>1. Transformer 是如何被发明的？</h2>
+<h3>1.1 从 RNN 的局限开始</h3>
+<p>在 Transformer 出现之前，序列建模主要依赖 RNN、LSTM 和 GRU。</p>
+<p>以 RNN 为例：</p>
+<p>$$
+h_t=f(h_{t-1},x_t)
+$$</p>
+<p>每个时间步的隐藏状态依赖前一个时间步。这种结构具有天然的顺序归纳偏置，但也带来两个问题：</p>
+<p><strong>第一，序列计算难以并行。</strong></p>
+<p>由于 $h_t$ 依赖 $h_{t-1}$，必须顺序处理不同时间步。即使 GPU 可以高效执行矩阵运算，也很难消除这种时间依赖。</p>
+<p><strong>第二，长距离依赖的信息传递路径较长。</strong></p>
+<p>如果序列开头的信息需要影响末尾，那么它通常必须经过许多中间状态。虽然 LSTM、GRU 缓解了梯度传播困难，但没有从根本上消除顺序计算。</p>
+<p>因此，一个自然的问题是：</p>
+<p><strong>能不能让两个任意距离的 Token 直接交换信息，而不必经过中间状态？</strong></p>
+<h3>1.2 Attention 最初只是 RNN 的辅助组件</h3>
+<p>2014 年，Bahdanau 等人在神经机器翻译中引入了重要的 Attention 机制。</p>
+<p>传统 Encoder–Decoder 模型通常把源序列的信息压缩到有限的隐藏状态中。Attention 则允许 Decoder 在生成每个目标 Token 时，动态访问 Encoder 不同位置的表示。</p>
+<p>其核心形式是：</p>
+<p>$$
+c_t=\sum_i\alpha_{ti}h_i
+$$</p>
+<p>其中：</p>
+<ul>
+<li>
+$h_i$ 是 Encoder 在第 $i$ 个位置的隐藏状态。</li>
+<li>
+$\alpha_{ti}$ 表示生成目标位置 $t$ 时对源位置 $i$ 的注意力。</li>
+<li>
+$c_t$ 是当前目标位置获得的上下文信息。</li>
+</ul>
+<p>这是一项关键突破，因为信息不再只能通过固定长度的最终状态传递。</p>
+<p>但当时 Attention 仍然附着在 RNN 上：它改善了信息检索方式，却没有消除序列递归。</p>
+<h3>1.3 真正的创新：为什么不把 RNN 直接删除？</h3>
+<p>Transformer 团队提出了一个更激进的问题：</p>
+<blockquote>
+<p>既然 Attention 已经可以直接建立不同位置之间的关系，那么序列建模是否还需要 RNN 或 CNN？</p>
+</blockquote>
+<p>这就是论文标题 <em>Attention Is All You Need</em> 的核心思想。</p>
+<p>2017 年，Vaswani 等人提出 Transformer，使用 Self-Attention 作为主要的跨位置交互机制，不再依赖循环网络或者卷积网络完成序列关系建模。</p>
+<p>原论文的设计并非一次性凭空出现。Attention、Residual Connection、LayerNorm、FFN 都已有技术基础。Transformer 的重要创新，是把这些组件组织成一种能够高效并行、表达复杂序列关系的完整架构。</p>
+<p>从科研方法上看，这个过程具有启发性：</p>
+<ol>
+<li>发现现有结构的瓶颈：RNN 的顺序依赖。</li>
+<li>重新抽象问题：序列建模的本质是否是位置之间的信息交互？</li>
+<li>提出替代机制：使用 Self-Attention 建立直接联系。</li>
+<li>解决新架构的问题：位置表示、特征变换、深层训练和输出生成。</li>
+<li>通过大量实验与消融验证设计。</li>
+</ol>
+<p><strong>创新不一定来自增加新的模块，也可能来自发现一个长期被认为必需的模块其实可以被删除。</strong></p>
+<h2>2. 理解 Transformer 的统一框架：信息交互、特征变换与状态更新</h2>
+<p>设输入序列表示为：</p>
+<p>$$
+X=[x_1,x_2,\ldots,x_n]\in\mathbb R^{n\times d}
+$$</p>
+<p>其中：</p>
+<ul>
+<li>
+$n$ 是 Token 数量。</li>
+<li>
+$d$ 是每个 Token 的特征维度。</li>
+<li>每一行是一个 Token，每一列是一个特征通道。</li>
+</ul>
+<p>从计算功能出发，可以区分三个问题。</p>
+<p><strong>信息交互（Token Mixing）</strong>：当前位置如何读取其他位置的信息？</p>
+<p><strong>特征变换（Channel Mixing）</strong>：一个位置内部的不同特征如何被组合与加工？</p>
+<p><strong>状态更新（Residual Update）</strong>：新的计算结果如何融入已有表示，而不必完全覆盖原有信息？</p>
+<p>这提供了理解 ResNet、CNN 和 Transformer 的统一视角。</p>
+<h3>2.1 Convolution：固定局部邻域的信息交互</h3>
+<p>以一维标准卷积为例：</p>
+<p>$$
+y_i=\sum_{\Delta=-r}^{r}W_\Delta x_{i+\Delta}+b
+$$</p>
+<p>其中 $W_\Delta$ 是偏移量 $\Delta$ 对应的权重矩阵。</p>
+<p>它具有三个重要性质：</p>
+<ul>
+<li><strong>局部性</strong>：标准小卷积核主要读取有限邻域内的信息。</li>
+<li><strong>参数共享</strong>：相同的卷积核在不同位置重复使用。</li>
+<li><strong>固定交互规则</strong>：标准卷积核的权重经过训练后，不会因当前输入内容而改变。</li>
+</ul>
+<p>普通卷积通常同时完成局部 Token Mixing 和 Channel Mixing。</p>
+<p>多层卷积可以扩大感受野，最终实现远距离信息交互，但单层小卷积核一般无法直接连接任意两个远距离位置。</p>
+<h3>2.2 Self-Attention：内容驱动的动态信息交互</h3>
+<p>单头 Self-Attention 的简化形式是：</p>
+<p>$$
+y_i=\sum_{j=1}^{n}\alpha_{ij}(X)W_Vx_j
+$$</p>
+<p>其中：</p>
+<p>$$
+\alpha_{ij}(X)=
+\frac{
+\exp(q_i^\top k_j/\sqrt{d_k})
+}{
+\sum_l\exp(q_i^\top k_l/\sqrt{d_k})
+}
+$$</p>
+<p>与标准卷积的根本区别在于：</p>
+<p>$$
+\boxed{\alpha_{ij}=\alpha_{ij}(X)}
+$$</p>
+<p>即交互权重由当前输入动态决定。</p>
+<p>因此，Self-Attention 不必固定读取邻近位置，而可以根据内容直接访问任意位置。</p>
+<p>它也包含通道特征投影，因此并非完全只进行 Token Mixing。</p>
+<h3>2.3 Position-wise FFN：逐位置的非线性特征变换</h3>
+<p>原始 Transformer 中：</p>
+<p>$$
+FFN(x_i)=\operatorname{ReLU}(x_iW_1+b_1)W_2+b_2
+$$</p>
+<p>其关键性质是：</p>
+<p>$$
+y_i=f(x_i)
+$$</p>
+<p>FFN 不直接读取其他 Token 的状态，而是独立地处理当前位置的特征。</p>
+<p>因此可以概括为：</p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>模块</th>
+<th>跨 Token 信息交互</th>
+<th>通道特征变换</th>
+<th>主要机制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>标准局部卷积</td>
+<td>局部</td>
+<td>有</td>
+<td>共享的固定卷积核</td>
+</tr>
+<tr>
+<td>Self-Attention</td>
+<td>全局或指定范围</td>
+<td>有</td>
+<td>输入相关的动态注意力</td>
+</tr>
+<tr>
+<td>Position-wise FFN</td>
+<td>无直接交互</td>
+<td>有</td>
+<td>共享的逐位置非线性映射</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p>需要注意，Attention 整体也是非线性的，因为其权重包含输入相关的 Softmax。不能简单认为 Attention 是线性的、FFN 才是非线性的。</p>
+<h3>2.4 FFN 和 $1\times1$ 卷积的数学联系</h3>
+<p>如果卷积核大小为 1：</p>
+<p>$$
+y_i=Wx_i+b
+$$</p>
+<p>那么它只进行当前位置内部的通道变换。</p>
+<p>因此：</p>
+<p>$$
+\boxed{
+FFN\equiv
+1\times1\text{ Conv}
+\rightarrow\operatorname{ReLU}
+\rightarrow1\times1\text{ Conv}
+}
+$$</p>
+<p>这里的等价指逐位置的线性变换和激活操作，而不是空间邻域卷积。</p>
+<p>这说明 FFN 与卷积并非完全独立的计算思想。</p>
+<h3>2.5 为什么 Attention 和 FFN 要交替堆叠？</h3>
+<p>考虑一个 Transformer Block：</p>
+<p>$$
+X\xrightarrow{\text{Attention}}Y
+\xrightarrow{\text{FFN}}Z
+$$</p>
+<p>Attention 首先聚合其他位置的信息，FFN 随后加工聚合后的表示。</p>
+<p>下一层 Attention 将基于新的表示重新计算 Q、K、V，于是得到新的 Token 关系。</p>
+<p>因此，深层 Transformer 可以形成：</p>
+<p>$$
+\boxed{
+\text{信息聚合}
+\rightarrow
+\text{非线性特征变换}
+\rightarrow
+\text{重新建立关系}
+\rightarrow
+\text{再次聚合}
+}
+$$</p>
+<p>FFN 虽然没有直接跨 Token 交互，但它处理的输入已经可能包含前面 Attention 汇聚的上下文信息。</p>
+<p>这也是为什么它并不只是一个无关紧要的附加模块。</p>
+<h2>3. Attention 的数学本质：Q、K、V 是如何完成信息检索的？</h2>
+<h3>3.1 Q、K、V 的定义</h3>
+<p>设输入为：</p>
+<p>$$
+X\in\mathbb R^{n\times d_{\text{model}}}
+$$</p>
+<p>经过三个不同的可学习线性投影：</p>
+<p>$$
+Q=XW_Q
+$$</p>
+<p>$$
+K=XW_K
+$$</p>
+<p>$$
+V=XW_V
+$$</p>
+<p>其中：</p>
+<ul>
+<li><strong>Query</strong>：当前 Token 想寻找什么信息。</li>
+<li><strong>Key</strong>：每个 Token 提供什么信息用于匹配。</li>
+<li><strong>Value</strong>：每个 Token 实际向其他位置提供什么内容。</li>
+</ul>
+<p>Q 和 K 负责计算匹配关系，V 负责传递内容。</p>
+<p>即使 Self-Attention 中 Q、K、V 来源于相同的输入，它们经过不同投影后也通常并不相等。</p>
+<h3>3.2 Scaled Dot-Product Attention</h3>
+<p>原论文的核心公式：</p>
+<h1>$$<br>
+\boxed{<br>
+\operatorname{Attention}(Q,K,V)</h1>
+<p>\operatorname{softmax}<br>
+\left(<br>
+\frac{QK^\top}{\sqrt{d_k}}<br>
+\right)V<br>
+}<br>
+$$</p>
+<p>可以拆解为四个步骤。</p>
+<p><strong>第一步：计算 Query 与 Key 的相似度</strong></p>
+<p>$$
+S=QK^\top
+$$</p>
+<p>如果有 $m$ 个 Query、$n$ 个 Key：</p>
+<p>$$
+Q\in\mathbb R^{m\times d_k}
+$$</p>
+<p>$$
+K\in\mathbb R^{n\times d_k}
+$$</p>
+<p>则：</p>
+<p>$$
+S\in\mathbb R^{m\times n}
+$$</p>
+<p><strong>第二步：缩放</strong></p>
+<p>$$
+S'=\frac{S}{\sqrt{d_k}}
+$$</p>
+<p><strong>第三步：沿 Key 维度做 Softmax</strong></p>
+<p>$$
+
+A_{ij}=
+
+\frac{\exp(S'_{ij})}
+
+{\sum_{l=1}^{n}\exp(S'_{il})}
+
+$$</p>
+<p>对于每个 Query，其在所有有效 Key 上的权重之和为 1。</p>
+<p><strong>第四步：加权求和 Value</strong></p>
+<p>$$
+O=AV
+$$</p>
+<p>若：</p>
+<p>$$
+V\in\mathbb R^{n\times d_v}
+$$</p>
+<p>则：</p>
+<p>$$
+O\in\mathbb R^{m\times d_v}
+$$</p>
+<p>一个非常重要的结构性质是：</p>
+<p><strong>Attention 输出的位置数量由 Query 决定，而不是由 Key 或 Value 决定。</strong></p>
+<p>这也是理解 Cross-Attention 和 Residual Connection 的关键。</p>
+<h3>3.3 为什么必须除以 $\sqrt{d_k}$？</h3>
+<p>假设 Q 和 K 的各维分量相互独立，且均值为 0、方差为 1。</p>
+<p>对单个 Query 和 Key：</p>
+<p>$$
+S=q^\top k=\sum_{i=1}^{d_k}q_ik_i
+$$</p>
+<p>因为：</p>
+<p>$$
+\mathbb E[q_ik_i]=0
+$$</p>
+<p>且：</p>
+<p>$$
+\operatorname{Var}(q_ik_i)=1
+$$</p>
+<p>在相应独立性假设下：</p>
+<h1>$$<br>
+\operatorname{Var}(S)</h1>
+<p>\sum_{i=1}^{d_k}\operatorname{Var}(q_ik_i)<br>
+=d_k<br>
+$$</p>
+<p>所以：</p>
+<p>$$
+\operatorname{Std}(S)=\sqrt{d_k}
+$$</p>
+<p>随着维度增大，未缩放点积的典型幅度也会增加。</p>
+<p>于是：</p>
+<p>$$
+S'=\frac{S}{\sqrt{d_k}}
+$$</p>
+<p>得到：</p>
+<p>$$
+\boxed{\operatorname{Var}(S')=1}
+$$</p>
+<p>因此，$\sqrt{d_k}$ 不是随意设置的超参数，而是具有明确的统计动机。</p>
+<p>需要强调，这个方差结论依赖独立性、均值和方差假设，并不是对任意 Q/K 分布都严格成立。</p>
+<h3>3.4 为什么点积幅度过大会影响梯度？</h3>
+<p>对于 Softmax：</p>
+<p>$$
+p_i=\frac{e^{s_i}}{\sum_j e^{s_j}}
+$$</p>
+<p>其导数：</p>
+<h1>$$<br>
+\frac{\partial p_i}{\partial s_j}</h1>
+<p>p_i(\delta_{ij}-p_j)<br>
+$$</p>
+<p>当某个 Logit 远大于其他 Logit，Softmax 输出可能接近：</p>
+<p>$$
+[1,0,0,\ldots]
+$$</p>
+<p>这时不少导数项会接近 0，造成 Softmax 饱和，使优化变得困难。</p>
+<p>缩放有助于控制 Logit 的典型尺度，避免随着 $d_k$ 增大而自然变得过于极端。</p>
+<p>但缩放不能保证所有梯度都不会消失。</p>
+<p>这里还可以从温度参数理解：</p>
+<p>$$
+A=\operatorname{softmax}(S/T)
+$$</p>
+<ul>
+<li>
+$T$ 越大，分布通常越平缓。</li>
+<li>
+$T$ 越小，分布通常越尖锐。</li>
+</ul>
+<p>Transformer 使用 $T=\sqrt{d_k}$ 控制注意力分数的尺度。</p>
+<h2>4. 为什么需要 Multi-Head Attention？</h2>
+<p>单头 Attention 只产生一套注意力权重及其对应的聚合表示。</p>
+<p>原论文提出 Multi-Head Attention，让多个 Head 在不同的可学习表示子空间中进行信息交互。</p>
+<p>第 $i$ 个 Head：</p>
+<p>$$
+head_i=
+\operatorname{Attention}
+(QW_i^Q,KW_i^K,VW_i^V)
+$$</p>
+<p>最终：</p>
+<h1>$$<br>
+\boxed{<br>
+\operatorname{MultiHead}(Q,K,V)</h1>
+<p>\operatorname{Concat}(head_1,\ldots,head_h)W^O<br>
+}<br>
+$$</p>
+<p>不同 Head 可能学习不同的依赖关系，例如局部语法、远距离引用、位置匹配等。</p>
+<p>但这些功能不是预先指定的，也不能保证所有 Head 都互不冗余。</p>
+<h3>4.1 原论文的主要维度</h3>
+<p>Transformer Base：</p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>参数</th>
+<th align="right">数值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$d_{\text{model}}$</td>
+<td align="right">512</td>
+</tr>
+<tr>
+<td>Head 数量 $h$
+</td>
+<td align="right">8</td>
+</tr>
+<tr>
+<td>$d_k$</td>
+<td align="right">64</td>
+</tr>
+<tr>
+<td>$d_v$</td>
+<td align="right">64</td>
+</tr>
+<tr>
+<td>$d_{ff}$</td>
+<td align="right">2048</td>
+</tr>
+<tr>
+<td>Encoder 层数</td>
+<td align="right">6</td>
+</tr>
+<tr>
+<td>Decoder 层数</td>
+<td align="right">6</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p>对于长度为 $n$、Batch Size 为 $B$ 的 Self-Attention：</p>
+<p>$$
+X:(B,n,512)
+$$</p>
+<p>Q/K/V 拆头后：</p>
+<p>$$
+Q,K,V:(B,8,n,64)
+$$</p>
+<p>注意力分数：</p>
+<p>$$
+QK^\top:(B,8,n,n)
+$$</p>
+<p>每个 Head 聚合结果：</p>
+<p>$$
+O_i:(B,n,64)
+$$</p>
+<p>合并 Head：</p>
+<p>$$
+\operatorname{Concat}(O_1,\ldots,O_8):(B,n,512)
+$$</p>
+<p>经过 $W^O$ 后，仍为：</p>
+<p>$$
+(B,n,512)
+$$</p>
+<h3>4.2 Head 数量越多越好吗？</h3>
+<p>不一定。</p>
+<p>在固定总投影宽度的条件下：</p>
+<p>$$
+d_k=d_v=\frac{d_{\text{model}}}{h}
+$$</p>
+<p>Head 数增加时，每个 Head 的维度减小。</p>
+<p>若总 Q/K/V 投影维度保持 $d_{\text{model}}$，忽略 Bias，一个标准 Multi-Head Attention 的主要权重参数量为：</p>
+<p>$$
+P_{\text{MHA}}=4d_{\text{model}}^2
+$$</p>
+<p>对于 Base：</p>
+<p>$$
+P_{\text{MHA}}=4\times512^2=1,048,576
+$$</p>
+<p>因此，在这种配置下，将 8 个 Head 改成 16 个 Head，并不必然增加主要投影参数量。</p>
+<p>原论文的消融实验也表明，Head 数量和翻译表现并不呈简单的单调关系。</p>
+<hr>
+<h2>5. Encoder–Decoder：Self-Attention、Cross-Attention 与 Mask</h2>
+<p>原始 Transformer 不是单纯堆叠 Attention 的网络，而是一个完整的 Encoder–Decoder 架构。</p>
+<h3>5.1 Encoder 的计算</h3>
+<p>原始 Encoder 每层包含两个子层：</p>
+<ol>
+<li>Multi-Head Self-Attention。</li>
+<li>Position-wise FFN。</li>
+</ol>
+<p>两者都带 Residual Connection 和 LayerNorm。</p>
+<p>原始 Transformer 采用 <strong>Post-LN</strong>：</p>
+<p>$$
+Z=\operatorname{LN}(X+\operatorname{MHA}(X))
+$$</p>
+<p>$$
+Y=\operatorname{LN}(Z+\operatorname{FFN}(Z))
+$$</p>
+<p>Encoder 主要负责产生源序列的上下文表示。</p>
+<p>其 Full Self-Attention 可以在单层内让任意两个有效源位置直接交互。</p>
+<h3>5.2 Decoder 的三个子层</h3>
+<p>原始 Decoder 每层包含：</p>
+<ol>
+<li>Masked Multi-Head Self-Attention。</li>
+<li>Encoder–Decoder Cross-Attention。</li>
+<li>Position-wise FFN。</li>
+</ol>
+<p>其中最关键的区别是 Q/K/V 的来源。</p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>Attention 类型</th>
+<th>Query 来源</th>
+<th>Key / Value 来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Encoder Self-Attention</td>
+<td>Encoder</td>
+<td>Encoder</td>
+</tr>
+<tr>
+<td>Decoder Masked Self-Attention</td>
+<td>Decoder</td>
+<td>Decoder</td>
+</tr>
+<tr>
+<td>Cross-Attention</td>
+<td>Decoder</td>
+<td>Encoder</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p>Cross-Attention 的本质是：</p>
+<p><strong>Decoder 根据当前生成状态，从 Encoder 提供的源序列信息中进行检索。</strong></p>
+<h3>5.3 为什么 Cross-Attention 的 Residual 只连接 Decoder？</h3>
+<p>这是原始架构图中非常容易忽略的一个细节。</p>
+<p>设：</p>
+<p>$$
+D\in\mathbb R^{T\times d}
+$$</p>
+<p>是 Decoder 当前隐藏状态；</p>
+<p>$$
+E\in\mathbb R^{S\times d}
+$$</p>
+<p>是 Encoder 输出。</p>
+<p>Cross-Attention：</p>
+<p>$$
+Q=DW_Q
+$$</p>
+<p>$$
+K=EW_K,\qquad V=EW_V
+$$</p>
+<p>其输出：</p>
+<p>$$
+C=\operatorname{MultiHead}(Q,K,V)
+$$</p>
+<p>具有与 Decoder 相同的序列长度：</p>
+<p>$$
+C\in\mathbb R^{T\times d}
+$$</p>
+<p>于是原论文执行：</p>
+<p>$$
+\boxed{
+D'=\operatorname{LN}(D+C)
+}
+$$</p>
+<p>而不是：</p>
+<p>$$
+D'=\operatorname{LN}(D+E+C)
+$$</p>
+<p>这有两个原因。</p>
+<p><strong>首先，Encoder 和 Decoder 的序列长度可能不同。</strong></p>
+<p>例如：</p>
+<p>$$
+E:(7,512),\qquad D:(5,512)
+$$</p>
+<p>它们不能直接逐元素相加。</p>
+<p>但 Cross-Attention 可以通过：</p>
+<p>$$
+A:(5,7)
+$$</p>
+<p>把 Encoder 的信息映射为：</p>
+<p>$$
+C:(5,512)
+$$</p>
+<p>从而与 Decoder 状态相加。</p>
+<p><strong>更本质的原因：Residual 用于保留当前正在更新的状态。</strong></p>
+<p>在 Cross-Attention 中：</p>
+<ul>
+<li>Decoder 是信息接收者。</li>
+<li>Encoder 是信息提供者。</li>
+<li>Cross-Attention 是根据 Decoder 的需求，从 Encoder 检索信息。</li>
+<li>Residual 则保留 Decoder 已有的隐藏状态。</li>
+</ul>
+<p>因此：</p>
+<h1>$$<br>
+\boxed{<br>
+\text{新 Decoder 状态}</h1>
+<p>\text{原 Decoder 状态}<br>
++<br>
+\text{检索到的信息}<br>
+}<br>
+$$</p>
+<p>这里的原状态指进入 Cross-Attention 子层前的 Decoder 表示，并不是最开始的 Output Embedding。</p>
+<p>即使没有把 Encoder 输出直接加入 Residual，梯度仍然可以通过 Cross-Attention 的 K/V 路径传播回 Encoder。</p>
+<p>一个非常有用的统一理解是：</p>
+<blockquote>
+<p><strong>Residual 保留当前状态，Attention 从其他状态读取信息。</strong></p>
+</blockquote>
+<p>在 Self-Attention 中，由于 Q/K/V 来自同一表示，这一区别不太明显；在 Cross-Attention 中，两者的职责变得非常清楚。</p>
+<h3>5.4 为什么 Decoder 需要 Causal Mask？</h3>
+<p>自回归语言生成要求：</p>
+<h1>$$<br>
+p(y_1,\ldots,y_T\mid x)</h1>
+<p>\prod_{t=1}^{T}p(y_t\mid y_{&lt;t},x)<br>
+$$</p>
+<p>预测当前位置时，不能读取未来目标 Token。</p>
+<p>因此，在 Decoder Self-Attention 中需要限制信息访问范围。</p>
+<p>例如长度为 4 的 Causal Mask：</p>
+<p>$$
+M=
+\begin{bmatrix}
+0&amp;-\infty&amp;-\infty&amp;-\infty\\
+0&amp;0&amp;-\infty&amp;-\infty\\
+0&amp;0&amp;0&amp;-\infty\\
+0&amp;0&amp;0&amp;0
+\end{bmatrix}
+$$</p>
+<p>Attention 变为：</p>
+<p>$$
+\boxed{
+A=\operatorname{softmax}
+\left(
+\frac{QK^\top}{\sqrt{d_k}}+M
+\right)
+}
+$$</p>
+<p>这样被屏蔽位置的权重为 0。</p>
+<p>Mask 必须在 Softmax 之前正确应用；仅在 Softmax 之后把部分权重清零，一般会破坏权重归一化。</p>
+<p>除了 Causal Mask，还有 Padding Mask，用来屏蔽无效的补齐位置。</p>
+<p>两者解决的问题不同。</p>
+<h3>5.5 为什么 Shifted Right 和 Causal Mask 必须配合？</h3>
+<p>假设目标序列为：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">我 爱 你 &lt;eos&gt;
+</code></pre>
+<p>训练时：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">Decoder input: &lt;bos&gt; 我 爱 你
+Target:         我   爱 你 &lt;eos&gt;
+</code></pre>
+<p><strong>Shifted Right</strong> 让当前位置的输入不直接包含当前位置的目标标签。</p>
+<p><strong>Causal Mask</strong> 防止当前位置通过 Attention 偷看右侧输入，其中可能包含当前待预测的答案。</p>
+<p>如果只使用 Shifted Right、不使用 Mask，仍可能通过右侧位置发生标签泄漏。</p>
+<p>如果只使用 Mask、不右移，当前位置本身就可能包含正确答案。</p>
+<p>因此，两者承担不同但互补的作用。</p>
+<h3>5.6 为什么训练可以并行，推理却仍然需要逐 Token 生成？</h3>
+<p>训练时，完整的目标序列已知，可以使用 Teacher Forcing，让所有位置同时计算预测损失。</p>
+<p>Causal Mask 保证虽然同时计算，但每个位置只能访问允许的前缀。</p>
+<p>而推理时，未来 Token 尚未生成，需要逐步采样或选择：</p>
+<p>$$
+y_1\rightarrow y_2\rightarrow y_3\rightarrow\cdots
+$$</p>
+<p>因此：</p>
+<p><strong>Transformer 消除了层内的序列递归依赖，但并没有消除自回归生成本身的时间依赖。</strong></p>
+<p>现代模型使用 KV Cache 复用历史 K/V，降低重复计算，但通常仍然逐步决定新 Token。</p>
+<hr>
+<h2>6. Positional Encoding：没有 RNN 后，模型如何理解顺序？</h2>
+<h3>6.1 Self-Attention 为什么不能天然理解位置？</h3>
+<p>考虑没有 Positional Encoding、也没有位置相关 Mask 的 Full Self-Attention。</p>
+<p>设 $P$ 是 Token 的置换矩阵。</p>
+<p>可以证明：</p>
+<p>$$
+\boxed{
+SA(PX)=P,SA(X)
+}
+$$</p>
+<p>这意味着如果交换输入 Token 的顺序，输出会对应地交换顺序。</p>
+<p>这叫做 <strong>Permutation Equivariance（排列等变性）</strong>。</p>
+<p>它不等于排列不变性。Self-Attention 不是对输入顺序变化完全没有响应，而是输出会随输入位置同步置换。</p>
+<p>更进一步，对于 Cross-Attention，如果 Key 和 Value 被相同方式置换：</p>
+<h1>$$<br>
+\boxed{<br>
+\operatorname{Attention}(Q,PK,PV)</h1>
+<p>\operatorname{Attention}(Q,K,V)<br>
+}<br>
+$$</p>
+<p>这里的置换不会改变加权聚合结果。</p>
+<p>因此，如果 Encoder 完全没有源序列位置信息，仅仅重新排列源 Token，就可能无法让 Decoder 区分不同的词序。</p>
+<p>这揭示了位置编码的必要性。</p>
+<p>不过，带 Causal Mask 的 Self-Attention 已经具有顺序相关的结构约束，不能直接套用上述无 Mask 的排列等变结论。</p>
+<h3>6.2 固定 Sinusoidal Positional Encoding</h3>
+<p>原论文使用：</p>
+<p>$$
+PE(pos,2i)=
+\sin\left(
+\frac{pos}{10000^{2i/d_{\text{model}}}}
+\right)
+$$</p>
+<p>$$
+PE(pos,2i+1)=
+\cos\left(
+\frac{pos}{10000^{2i/d_{\text{model}}}}
+\right)
+$$</p>
+<p>不同维度对应不同频率，相邻的 Sin/Cos 两维使用相同频率。</p>
+<p>输入表示为：</p>
+<p>$$
+\boxed{
+X_0=\sqrt{d_{\text{model}}}\operatorname{Embedding}(X)+PE
+}
+$$</p>
+<p>Embedding 的缩放与 Attention Logit 的 $\sqrt{d_k}$ 缩放是两项不同设计。</p>
+<p>Sinusoidal PE 的主要特点：</p>
+<ul>
+<li>不需要训练额外的位置参数。</li>
+<li>可以为未见过的位置直接计算编码。</li>
+<li>不同频率提供多尺度位置表示。</li>
+<li>相对位置偏移具有线性变换结构。</li>
+</ul>
+<h3>6.3 为什么 Sin/Cos 能表示相对位置？</h3>
+<p>定义：</p>
+<p>$$
+\theta=\frac{pos}{\omega_i},
+\qquad
+\Delta=\frac{k}{\omega_i}
+$$</p>
+<p>其中：</p>
+<p>$$
+\omega_i=10000^{2i/d_{\text{model}}}
+$$</p>
+<p>根据三角函数加法公式：</p>
+<h1>$$<br>
+\begin{bmatrix}<br>
+\sin(\theta+\Delta)\<br>
+\cos(\theta+\Delta)<br>
+\end{bmatrix}</h1>
+<p>\begin{bmatrix}<br>
+\cos\Delta&amp;\sin\Delta\<br>
+-\sin\Delta&amp;\cos\Delta<br>
+\end{bmatrix}<br>
+\begin{bmatrix}<br>
+\sin\theta\<br>
+\cos\theta<br>
+\end{bmatrix}<br>
+$$</p>
+<p>对于固定偏移 $k$，变换矩阵只与 $k$ 和对应频率有关，而不依赖绝对位置 $pos$。</p>
+<p>因此：</p>
+<p>$$
+\boxed{
+PE(pos+k)
+\text{ 可以由 }
+PE(pos)
+\text{ 通过依赖 }k\text{ 的线性变换表示}
+}
+$$</p>
+<p>这是原论文使用 Sinusoidal PE 的重要数学动机。</p>
+<p>但这并不保证模型能可靠地泛化到任意长度。能够计算未见位置的编码，不等于一定能够正确理解未见过的长序列。</p>
+<h3>6.4 为什么要直接相加，而不是拼接？</h3>
+<p>原论文采用：</p>
+<p>$$
+X=Embedding(X)+PE
+$$</p>
+<p>这样可以保持隐藏维度 $d_{\text{model}}$ 不变。</p>
+<p>如果拼接：</p>
+<p>$$
+X=[Embedding(X);PE]
+$$</p>
+<p>则隐藏维度可能增加，需要调整后续网络或额外增加投影层。</p>
+<p>相加是一种简洁的设计选择，并不是唯一合理的实现方式。</p>
+<hr>
+<h2>7. ResNet 与 Transformer：Residual 不仅是优化技巧</h2>
+<h3>7.1 Residual Connection 的起源</h3>
+<p>ResNet 的基本形式是：</p>
+<p>$$
+\boxed{
+H(x)=x+F(x)
+}
+$$</p>
+<p>其中 $F(x)$ 学习相对于输入的更新。</p>
+<p>如果某层不需要改变输入，只要：</p>
+<p>$$
+F(x)=0
+$$</p>
+<p>就能得到恒等映射：</p>
+<p>$$
+H(x)=x
+$$</p>
+<p>这降低了学习恒等映射的难度，有助于缓解深层网络的退化和优化问题。</p>
+<h3>7.2 为什么 Residual 有助于梯度传播？</h3>
+<p>对于：</p>
+<p>$$
+y=x+F(x)
+$$</p>
+<p>其 Jacobian 为：</p>
+<h1>$$<br>
+\boxed{<br>
+\frac{\partial y}{\partial x}</h1>
+<p>I+\frac{\partial F(x)}{\partial x}<br>
+}<br>
+$$</p>
+<p>反向传播时，梯度包含一条恒等路径。</p>
+<p>因此，即使残差分支的梯度很弱，也可能通过这条路径传播信息。</p>
+<p>但不能据此认为残差连接能够完全消除所有梯度消失或爆炸问题。不同梯度路径仍可能相互影响。</p>
+<h3>7.3 原论文 Post-LN 与现代 Pre-LN</h3>
+<p>原始 Transformer 使用：</p>
+<p>$$
+\boxed{
+y=\operatorname{LN}(x+F(x))
+}
+$$</p>
+<p>即 Post-LN。</p>
+<p>其 Jacobian：</p>
+<p>$$
+J_y=
+J_{\operatorname{LN}}(x+F(x))
+(I+J_F(x))
+$$</p>
+<p>而 Pre-LN：</p>
+<p>$$
+\boxed{
+y=x+F(\operatorname{LN}(x))
+}
+$$</p>
+<p>对应：</p>
+<p>$$
+J_y=
+I+J_F(\operatorname{LN}(x))J_{\operatorname{LN}}(x)
+$$</p>
+<p>可以看到，Pre-LN 在整个残差块层面保留了更加直接的恒等梯度路径。</p>
+<p>后来的理论与实验研究发现，这种差别会影响深层 Transformer 在初始化时的梯度分布与优化稳定性。</p>
+<p>但 Pre-LN 并非在所有条件下都严格优于 Post-LN，它们仍涉及训练稳定性、表示演化和网络深度等方面的权衡。</p>
+<h3>7.4 更深刻的解释：Residual Stream 是共享的状态空间</h3>
+<p>现代 Mechanistic Interpretability 研究提供了另一个视角：</p>
+<p><strong>Residual Connection 不只是为了让梯度传播，更让不同层可以在同一个持续存在的表示空间中读写信息。</strong></p>
+<p>考虑 Pre-LN：</p>
+<h1>$$<br>
+x^{(l+1)}</h1>
+<p>x^{(l)}<br>
++<br>
+F_l(\operatorname{LN}(x^{(l)}))<br>
+$$</p>
+<p>忽略某些具体实现细节，可以把不同层看成对 Residual Stream 进行连续更新的模块：</p>
+<ul>
+<li>Attention 从其他 Token 读取信息。</li>
+<li>FFN 读取当前 Token 的特征，并产生新的变换结果。</li>
+<li>Residual 将这些结果加入已有状态。</li>
+<li>后续层继续基于更新后的状态计算。</li>
+</ul>
+<p>因此，Transformer 不是每一层都完全重新生成表示，而是在已有表示基础上持续叠加、修改和组织信息。</p>
+<p>一种有启发性的概括是：</p>
+<h1>$$<br>
+\boxed{<br>
+\text{Transformer Block}</h1>
+<p>\text{信息交互}<br>
++<br>
+\text{特征计算}<br>
++<br>
+\text{共享状态更新}<br>
+}<br>
+$$</p>
+<p>这是一种分析模型计算的视角，而不是对所有架构变体的严格定义。</p>
+<hr>
+<h2>8. FFN 的新解释：它可能是一种分布式 Key–Value Memory</h2>
+<p>原论文将 FFN 描述为逐位置的前馈网络。</p>
+<p>但后续研究发现，它还可以被解释为一种分布式记忆机制。</p>
+<p>考虑忽略 Bias 的 FFN：</p>
+<p>$$
+FFN(x)=\operatorname{ReLU}(xW_1)W_2
+$$</p>
+<p>设隐藏层宽度为 $m$。</p>
+<p>将 $W_1$ 的第 $i$ 列记为 $k_i$，$W_2$ 的第 $i$ 行记为 $v_i$，则：</p>
+<p>$$
+\boxed{
+FFN(x)=
+\sum_{i=1}^{m}
+\operatorname{ReLU}(xk_i)v_i
+}
+$$</p>
+<p>可以理解为：</p>
+<ul>
+<li>
+$k_i$：某种输入模式的匹配方向。</li>
+<li>
+$\operatorname{ReLU}(xk_i)$：该模式被激活的程度。</li>
+<li>
+$v_i$：该模式激活后向输出写入的特征方向。</li>
+</ul>
+<p>因此，FFN 不只是笼统地做非线性变换，还可以通过参数存储某些可被输入激活的模式，并根据匹配程度组合对应的特征。</p>
+<p>Geva 等人在 <em>Transformer Feed-Forward Layers Are Key-Value Memories</em> 中系统研究了这种解释。</p>
+<p>但是需要避免一个过度简化：</p>
+<p><strong>一个 FFN 神经元并不一定对应一条清晰、独立的人类知识。</strong></p>
+<p>模型可能使用分布式表示，同一个神经元可能响应多个模式，同一个语义特征也可能分布在多个神经元构成的方向上。</p>
+<p>后来的 Superposition、Sparse Autoencoder 以及模型知识编辑研究，正是在进一步分析这些分布式特征的组织方式与因果作用。</p>
+<hr>
+<h2>9. Transformer 为什么能够形成复杂算法？Induction Heads 的启示</h2>
+<p>传统理解通常认为 Attention 负责关联 Token，FFN 负责加工特征。</p>
+<p>但 Mechanistic Interpretability 研究发现，多个 Attention Head 在不同层之间可以组成具有明确功能的计算电路。</p>
+<p>一个典型例子是 <strong>Induction Head</strong>。</p>
+<p>假设上下文中出现：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">A B C ... A
+</code></pre>
+<p>模型可能根据此前出现过的 <code class="notranslate">A B</code> 模式，预测当前位置的 <code class="notranslate">A</code> 后面也是 <code class="notranslate">B</code>。</p>
+<p>一种可能的实现方式是：</p>
+<ol>
+<li>某个 Head 将相邻 Token 信息移动到合适位置。</li>
+<li>后续 Head 利用这些信息匹配历史中重复出现的模式。</li>
+<li>模型读取历史模式后面出现的 Token，用于当前预测。</li>
+</ol>
+<p>这种机制展示了一个重要事实：</p>
+<p><strong>简单 Attention 运算通过跨层组合，可以实现更复杂的信息检索算法。</strong></p>
+<p>相关研究也发现 Induction Heads 的形成与某些 In-Context Learning 行为存在关联。</p>
+<p>但不能认为所有上下文学习、复杂推理或知识检索都能够被 Induction Heads 单独解释。</p>
+<p>其真正启发是：理解 Transformer 不应只研究某一层某个 Head，而应进一步研究模块之间如何形成可组合的计算路径。</p>
+<hr>
+<h2>10. Attention Weight 不等于因果解释</h2>
+<p>可视化 Attention Matrix 很有用，但不能简单认为：</p>
+<p>$$
+\alpha_{ij}\text{ 大}
+\Longrightarrow
+x_j\text{ 对最终输出贡献一定大}
+$$</p>
+<p>原因是：</p>
+<ol>
+<li>Attention Weight 只决定 Value 的加权系数。</li>
+<li>不同 Value 的方向和幅值可能不同。</li>
+<li>Multi-Head 的输出还要经过线性投影。</li>
+<li>Residual 和 FFN 会继续改变隐藏状态。</li>
+<li>后续层可能增强、抵消或重新组合这些信息。</li>
+</ol>
+<p>因此，一个 Token 被高度关注，并不必然意味着它对最终预测具有最大的因果影响。</p>
+<p><em>Attention is not Explanation</em> 等研究对此提出了重要质疑。</p>
+<p>更可靠的机制分析不仅需要观察 Attention，还需要进行干预：</p>
+<ul>
+<li>删除某个 Head。</li>
+<li>修改特定 Attention Score。</li>
+<li>替换某一层隐藏状态。</li>
+<li>对 FFN 特征进行定向干预。</li>
+<li>观察输出行为是否按预期变化。</li>
+</ul>
+<p>这区分了<strong>相关性可视化</strong>与<strong>因果机制验证</strong>。</p>
+<hr>
+<h2>11. 训练机制：为什么更好的 Perplexity 不一定意味着更好的翻译？</h2>
+<h3>11.1 原始训练配置</h3>
+<p>Transformer Base 的代表性设置包括：</p>
+<ul>
+<li>Adam 优化器。</li>
+<li>
+$\beta_1=0.9$，$\beta_2=0.98$。</li>
+<li>
+$\epsilon_{\text{Adam}}=10^{-9}$。</li>
+<li>Warmup Steps 为 4000。</li>
+<li>Dropout 为 0.1。</li>
+<li>Label Smoothing 为 0.1。</li>
+</ul>
+<p>学习率调度：</p>
+<p>$$
+lr=
+d_{\text{model}}^{-0.5}
+\min\left(
+step^{-0.5},
+step\cdot warmup^{-1.5}
+\right)
+$$</p>
+<p>因此前期学习率逐渐上升，之后按 Step 的平方根倒数衰减。</p>
+<p>Warmup 主要服务于优化稳定性，不是专门防止过拟合的机制。</p>
+<h3>11.2 Label Smoothing 的含义</h3>
+<p>普通分类使用 One-Hot 目标：</p>
+<p>$$
+q=e_y
+$$</p>
+<p>Label Smoothing 则使用：</p>
+<p>$$
+\boxed{
+q=(1-\epsilon)e_y+\epsilon u
+}
+$$</p>
+<p>其中 $u$ 是词表上的均匀分布。</p>
+<p>例如 4 个类别，$\epsilon=0.1$：</p>
+<p>$$
+q=[0.925,0.025,0.025,0.025]
+$$</p>
+<p>它不再鼓励模型无限制地把正确类别概率推向 1，有助于减少过度自信。</p>
+<h3>11.3 为什么 Label Smoothing 可能降低 PPL，却提高 BLEU？</h3>
+<p>这里先明确：PPL 越低越好，因此应当说 Label Smoothing 可能<strong>使 PPL 变差（升高）</strong>，而不是降低 PPL。</p>
+<p>Perplexity 定义为：</p>
+<p>$$
+\boxed{
+PPL=
+\exp\left(
+-\frac1N\sum_{t=1}^{N}
+\log p_\theta(y_t\mid y_{&lt;t},x)
+\right)
+}
+$$</p>
+<p>它衡量的是模型给参考 Token 分配的概率。</p>
+<p>对于单个 Token：</p>
+<p>$$
+PPL=\frac1{p(\text{正确词})}
+$$</p>
+<p>例如：</p>
+<ul>
+<li>正确词概率 0.99，对应单 Token PPL 约 1.01。</li>
+<li>正确词概率 0.90，对应单 Token PPL 约 1.11。</li>
+</ul>
+<p>即使两个模型预测的最高概率类别完全相同，只要模型对正确词的置信度不同，PPL 就可能不同。</p>
+<p>而 Accuracy 主要衡量预测类别是否正确。</p>
+<p>BLEU 则衡量生成译文和参考译文之间的 n-gram 匹配，并包含长度惩罚：</p>
+<p>$$
+BLEU=
+BP\cdot
+\exp\left(
+\sum_{n=1}^{N}w_n\log p_n
+\right)
+$$</p>
+<p>因此，PPL、Accuracy、BLEU 衡量的是不同方面：</p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>指标</th>
+<th>主要衡量内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PPL</td>
+<td>对参考 Token 分配的概率</td>
+</tr>
+<tr>
+<td>Token Accuracy</td>
+<td>预测类别是否正确</td>
+</tr>
+<tr>
+<td>BLEU</td>
+<td>最终生成译文与参考译文的匹配程度</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p>Label Smoothing 可能使模型对参考答案的置信度降低，却通过正则化改善泛化与最终生成表现。</p>
+<p>原论文的相关消融结果为：</p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>Label Smoothing</th>
+<th align="right">PPL ↓</th>
+<th align="right">BLEU ↑</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td align="right">4.67</td>
+<td align="right">25.3</td>
+</tr>
+<tr>
+<td>0.1</td>
+<td align="right">4.92</td>
+<td align="right">25.8</td>
+</tr>
+<tr>
+<td>0.2</td>
+<td align="right">5.47</td>
+<td align="right">25.7</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p>这说明不同指标并不必然同步改善，也说明更强的 Label Smoothing 不一定更好。</p>
+<p>注意，这里讨论的是相应评估口径下的 PPL，不应把使用平滑目标的训练损失直接等同于 One-Hot 参考标签下的 PPL。</p>
+<p><strong>核心结论：优化概率拟合、提高分类正确率与改善最终生成质量，不一定是完全相同的目标。</strong></p>
+<p>但不能推断 Label Smoothing 总会损害 PPL，或更低的 PPL 对生成质量没有价值。</p>
+<hr>
+<h2>12. Transformer 的计算复杂度与后续效率改进</h2>
+<h3>12.1 为什么 Self-Attention 有平方复杂度？</h3>
+<p>设：</p>
+<p>$$
+Q,K,V\in\mathbb R^{n\times d}
+$$</p>
+<p>计算：</p>
+<p>$$
+QK^\top
+$$</p>
+<p>需要：</p>
+<p>$$
+O(n^2d)
+$$</p>
+<p>计算 Attention Matrix 与 Value 的乘积，也需要相同量级的运算。</p>
+<p>因此，标准完整 Attention 核心计算：</p>
+<p>$$
+\boxed{
+O(n^2d)
+}
+$$</p>
+<p>考虑 Q/K/V 和输出投影后，通常还包含：</p>
+<p>$$
+O(nd^2)
+$$</p>
+<p>所以完整 Attention 模块更全面的计算复杂度是：</p>
+<p>$$
+\boxed{
+O(n^2d+nd^2)
+}
+$$</p>
+<p>标准显式实现还需要存储：</p>
+<p>$$
+A\in\mathbb R^{n\times n}
+$$</p>
+<p>因此注意力矩阵本身具有平方级空间开销。</p>
+<p>这与 RNN 形成了不同的权衡：</p>
+<ul>
+<li>RNN 有较强的序列递归依赖。</li>
+<li>Self-Attention 具有更好的序列并行性。</li>
+<li>但完整 Attention 在长序列下计算和存储成本昂贵。</li>
+</ul>
+<p>因此，<strong>并行能力强，不等于任何长度下计算量都更低。</strong></p>
+<h3>12.2 FlashAttention：相同公式，不同计算组织</h3>
+<p>FlashAttention 的重要贡献不是改变 Attention 的数学定义，而是改变它的计算方式。</p>
+<p>传统实现通常会显式构造或读写较大的 Attention Matrix。</p>
+<p>FlashAttention 使用：</p>
+<ul>
+<li>分块计算。</li>
+<li>Online Softmax。</li>
+<li>GPU 内存层级感知的计算安排。</li>
+<li>尽可能减少高带宽显存与片上内存之间的数据搬运。</li>
+</ul>
+<p>其目标仍是计算精确的 Softmax Attention，而不是通过近似删除部分关系。</p>
+<p>总体算术复杂度并未因此变成线性，但中间存储和内存访问效率得到了显著改善。</p>
+<p>这说明一个重要思想：</p>
+<p><strong>理论计算复杂度、实际内存访问成本和硬件运行速度，是三个不同的优化维度。</strong></p>
+<h3>12.3 GQA 与 MLA：为什么不必为每个 Query Head 都保存完整 K/V？</h3>
+<p>原论文的 MHA 为多个 Head 分别计算 Q/K/V。</p>
+<p>但自回归推理需要维护历史 K/V Cache。</p>
+<p>为降低缓存与带宽成本，后续出现了：</p>
+<p><strong>MQA / GQA</strong></p>
+<p>多个 Query Head 可以共享一组或少量组 K/V Head。</p>
+<p>例如 8 个 Query Head 共享 2 组 K/V，在每个 KV Head 维度不变时，KV Cache 的相关元素数量可以下降到原来的四分之一。</p>
+<p><strong>MLA</strong></p>
+<p>进一步使用低秩压缩的潜在表示保存 K/V 相关信息，并通过适当的投影实现注意力计算。</p>
+<p>这些改进实际上都在研究一个深层问题：</p>
+<blockquote>
+<p>模型究竟需要保存多少历史信息，才能完成有效的上下文检索？</p>
+</blockquote>
+<hr>
+<h2>13. 现代 Transformer 改进了哪些原始设计？</h2>
+<p>Transformer 在成为主流基础架构后，很多组件都经历了重新设计。</p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>原始设计</th>
+<th>后续代表性方案</th>
+<th>主要研究动机</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Post-LN</td>
+<td>Pre-LN</td>
+<td>改善深层优化稳定性</td>
+</tr>
+<tr>
+<td>LayerNorm</td>
+<td>RMSNorm</td>
+<td>简化归一化计算</td>
+</tr>
+<tr>
+<td>Sinusoidal PE</td>
+<td>RoPE、ALiBi</td>
+<td>改进位置与相对距离表示</td>
+</tr>
+<tr>
+<td>ReLU FFN</td>
+<td>SwiGLU</td>
+<td>加强门控与特征变换</td>
+</tr>
+<tr>
+<td>Dense FFN</td>
+<td>MoE</td>
+<td>增加模型容量并稀疏激活参数</td>
+</tr>
+<tr>
+<td>Multi-Head Attention</td>
+<td>GQA、MLA</td>
+<td>减少 KV Cache 和带宽开销</td>
+</tr>
+<tr>
+<td>标准 Attention 实现</td>
+<td>FlashAttention</td>
+<td>提升 IO 效率</td>
+</tr>
+<tr>
+<td>全量 Attention</td>
+<td>线性 Attention、SSM、混合结构</td>
+<td>改善长序列效率</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p>这些改进不是互斥的，也没有一个模型必须全部采用。</p>
+<h3>13.1 RoPE：位置不一定要加在 Embedding 上</h3>
+<p>原始 Sinusoidal PE 将位置向量加到 Token Embedding。</p>
+<p>RoPE 则直接对 Q/K 施加位置相关的旋转。</p>
+<p>设：</p>
+<p>$$
+\tilde q_m=R(m)q_m
+$$</p>
+<p>$$
+\tilde k_n=R(n)k_n
+$$</p>
+<p>其中 $R(m)$ 为二维旋转块构成的矩阵。</p>
+<p>于是：</p>
+<p>$$
+\begin{aligned}
+\tilde q_m^\top\tilde k_n
+&amp;=q_m^\top R(m)^\top R(n)k_n\\
+&amp;=\boxed{q_m^\top R(n-m)k_n}
+\end{aligned}
+$$</p>
+<p>因此位置相关部分自然依赖相对偏移 $n-m$。</p>
+<p>这带来一种重要的设计思想：</p>
+<p><strong>位置信息不一定属于某个 Token 自身，也可以被直接编码到两个 Token 的关系之中。</strong></p>
+<p>RoPE 具有良好的数学结构，但并不保证无限长度外推。</p>
+<h3>13.2 SwiGLU：FFN 从普通激活变成门控计算</h3>
+<p>原始 FFN：</p>
+<p>$$
+FFN(x)=W_2\operatorname{ReLU}(W_1x)
+$$</p>
+<p>以列向量记法表示，一种 SwiGLU 结构为：</p>
+<p>$$
+\boxed{
+FFN(x)=W_o\left[
+\operatorname{SiLU}(W_gx)\odot W_ux
+\right]
+}
+$$</p>
+<p>其中 $\odot$ 是逐元素乘法。</p>
+<p>它通过一个分支产生门控信号，对另一个分支的特征进行调制。</p>
+<p>因此，FFN 不仅进行非线性映射，还能够更灵活地控制不同特征的贡献。</p>
+<h3>13.3 MoE：让不同 Token 激活不同的参数</h3>
+<p>Mixture of Experts 将 FFN 扩展为多个专家网络，并通过 Router 选择部分专家参与计算。</p>
+<p>$$
+\boxed{
+y=\sum_{e\in S(x)}g_e(x)FFN_e(x)
+}
+$$</p>
+<p>其中 $S(x)$ 是当前输入选中的专家集合。</p>
+<p>这使得模型可以在增加总参数容量的同时，控制每个 Token 实际激活的计算量。</p>
+<p>从信息路由的角度看：</p>
+<ul>
+<li>Attention 动态选择读取哪些 Token。</li>
+<li>MoE 动态选择调用哪些计算模块。</li>
+</ul>
+<p>二者是不同层面的动态路由机制。</p>
+<hr>
+<h2>14. Attention 真的是序列建模的唯一选择吗？</h2>
+<p>2017 年 Transformer 挑战了 RNN 的必要性。</p>
+<p>后来，Mamba 等研究又进一步挑战了完整 Attention 的必要性。</p>
+<p>Mamba 使用选择性状态空间模型进行序列建模。</p>
+<p>一个简化的状态更新形式为：</p>
+<p>$$
+\boxed{
+h_t=A_t h_{t-1}+B_t x_t
+}
+$$</p>
+<p>$$
+y_t=C_t h_t
+$$</p>
+<p>其中状态更新参数可以依赖输入。</p>
+<p>这类模型的思路是：</p>
+<p><strong>不一定显式保存全部历史 Token 的 Key/Value，也可以维护一个持续更新的状态，用于压缩和传递历史信息。</strong></p>
+<p>其潜在优势是高效处理长序列。</p>
+<p>但压缩状态也带来信息保留能力的权衡：完整 Attention 可以直接检索历史位置，有限状态模型则需要决定哪些信息值得被保留。</p>
+<p>因此，后续研究逐渐走向混合设计：</p>
+<p>$$
+\boxed{
+\text{高效历史状态压缩}
++
+\text{必要时进行显式检索}
+}
+$$</p>
+<p>从这个角度看，现代序列建模真正的问题可能是：</p>
+<blockquote>
+<p>哪些历史信息需要精确保留？哪些可以压缩？什么情况下应该调用哪种计算机制？</p>
+</blockquote>
+<hr>
+<h2>15. 回到根本：Transformer 的核心究竟是什么？</h2>
+<p>经历近十年的发展，我们已经能够从不同层次理解 Transformer。</p>
+<h3>第一层：数学计算</h3>
+<p>Self-Attention 通过输入相关的矩阵运算实现跨位置的信息聚合。</p>
+<p>FFN 通过逐位置的非线性映射进行特征加工。</p>
+<p>Residual Connection 让已有表示能够持续参与后续计算。</p>
+<h3>第二层：表示与学习机制</h3>
+<p>Multi-Head Attention 在不同表示子空间中建立关系。</p>
+<p>FFN 可以形成分布式特征与记忆结构。</p>
+<p>Residual Stream 为不同层的信息读写提供共享表示。</p>
+<p>多层模块的组合可能形成复杂的检索和计算电路。</p>
+<h3>第三层：系统与效率</h3>
+<p>高效 Attention 实现优化内存访问。</p>
+<p>GQA、MLA 等方法压缩推理时的缓存成本。</p>
+<p>MoE 动态选择计算模块。</p>
+<p>状态空间和混合架构重新权衡精确检索与压缩记忆。</p>
+<h3>第四层：研究方法</h3>
+<p>从最初删除 RNN，到后来重构 PE、FFN、Attention 和归一化，Transformer 的演进说明：</p>
+<p><strong>一个架构的成功，并不意味着它的每个组件都是必需或最优的。</strong></p>
+<p>事实上，后来的研究者不断发现：</p>
+<ul>
+<li>有些结构约束来自数学上的表达需要。</li>
+<li>有些结构来自训练稳定性的考虑。</li>
+<li>有些结构是特定硬件条件下的效率选择。</li>
+<li>还有一些组件仅仅是当时有效、后来能够被替换的实现方案。</li>
+</ul>
+<p>所以，学习 Transformer 最好的方法，不是孤立记住各个模块的公式，而是不断追问：</p>
+<p><strong>这个模块解决什么问题？如果删除它会怎样？它依赖什么数学假设？它的作用能否被实验验证？是否存在更简单或更高效的替代方案？</strong></p>
+<p>最终，可以用一个统一的研究视角概括 Transformer：</p>
+<h1>$$<br>
+\boxed{<br>
+\text{Transformer}</h1>
+<p>\text{动态信息路由}<br>
++<br>
+\text{特征与记忆计算}<br>
++<br>
+\text{持续状态更新}<br>
+}<br>
+$$</p>
+<p>这不是对所有 Transformer 变体的严格定义，而是一个帮助理解架构功能与后续研究方向的框架。</p>
+<p>Transformer 的历史也揭示了一条更普遍的科研规律：</p>
+<blockquote>
+<p><strong>重要的架构创新，往往不是不断叠加复杂组件，而是重新发现问题的本质，质疑原本被认为必不可少的设计，再通过理论与实验找到更简洁的计算机制。</strong></p>
+</blockquote>
+<hr>
+<h2>参考文献与延伸阅读</h2>
+<h3>原始架构与历史</h3>
+<ol>
+<li>Vaswani et al., 2017. <a href="https://arxiv.org/abs/1706.03762" rel="nofollow">Attention Is All You Need</a>.</li>
+<li>Bahdanau et al., 2014. <a href="https://arxiv.org/abs/1409.0473" rel="nofollow">Neural Machine Translation by Jointly Learning to Align and Translate</a>.</li>
+<li>He et al., 2015. <a href="https://arxiv.org/abs/1512.03385" rel="nofollow">Deep Residual Learning for Image Recognition</a>.</li>
+<li>The Harvard NLP Group. <a href="https://nlp.seas.harvard.edu/annotated-transformer/" rel="nofollow">The Annotated Transformer</a>.</li>
+<li>Steven Levy, WIRED, 2024. <a href="https://www.wired.com/story/eight-google-employees-invented-modern-ai-transformers-paper/" rel="nofollow">8 Google Employees Invented Modern AI. Here's the Inside Story</a>.</li>
+</ol>
+<h3>深层优化与位置编码</h3>
+<ol start="6">
+<li>Xiong et al., 2020. <a href="https://arxiv.org/abs/2002.04745" rel="nofollow">On Layer Normalization in the Transformer Architecture</a>.</li>
+<li>Su et al., 2021. <a href="https://arxiv.org/abs/2104.09864" rel="nofollow">RoFormer: Enhanced Transformer with Rotary Position Embedding</a>.</li>
+<li>Shazeer, 2020. <a href="https://arxiv.org/abs/2002.05202" rel="nofollow">GLU Variants Improve Transformer</a>.</li>
+</ol>
+<h3>机制可解释性</h3>
+<ol start="9">
+<li>Geva et al., 2021. <a href="https://arxiv.org/abs/2012.14913" rel="nofollow">Transformer Feed-Forward Layers Are Key-Value Memories</a>.</li>
+<li>Elhage et al., 2021. <a href="https://transformer-circuits.pub/2021/framework/index.html" rel="nofollow">A Mathematical Framework for Transformer Circuits</a>.</li>
+<li>Olsson et al., 2022. <a href="https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html" rel="nofollow">In-context Learning and Induction Heads</a>.</li>
+<li>Jain &amp; Wallace, 2019. <a href="https://arxiv.org/abs/1902.10186" rel="nofollow">Attention is not Explanation</a>.</li>
+</ol>
+<h3>高效注意力与新架构</h3>
+<ol start="13">
+<li>Dao et al., 2022. <a href="https://arxiv.org/abs/2205.14135" rel="nofollow">FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness</a>.</li>
+<li>Ainslie et al., 2023. <a href="https://arxiv.org/abs/2305.13245" rel="nofollow">GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints</a>.</li>
+<li>DeepSeek-AI, 2024. <a href="https://arxiv.org/abs/2405.04434" rel="nofollow">DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model</a>.</li>
+<li>Gu &amp; Dao, 2023. <a href="https://arxiv.org/abs/2312.00752" rel="nofollow">Mamba: Linear-Time Sequence Modeling with Selective State Spaces</a>.</li>
+</ol></div>
+<div style="font-size:small;margin-top:8px;float:right;"></div>
+
+<button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>
+<div class="comments" id="comments"></div>
+
+</div>
+    <div id="footer"><div id="footer1">Copyright © <span id="copyrightYear"></span> <a href="https://carolynwei.github.io">Wei_jc's Blog</a></div>
+<div id="footer2">
+    <span id="runday"></span><span>Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a></span>
+</div>
+
+<script>
+var now=new Date();
+document.getElementById("copyrightYear").innerHTML=now.getFullYear();
+
+if(""!=""){
+    var startSite=new Date("");
+    var diff=now.getTime()-startSite.getTime();
+    var diffDay=Math.floor(diff/(1000*60*60*24));
+    document.getElementById("runday").innerHTML="网站运行 "+diffDay+" 天"+" • ";
+}
+</script></div>
+</body>
+<script>
+var IconList={'sun': 'M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V.75A.75.75 0 018 0zm0 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM2.343 2.343a.75.75 0 011.061 0l1.06 1.061a.75.75 0 01-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zm9.193 9.193a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061l-1.061-1.06a.75.75 0 010-1.061zM16 8a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5A.75.75 0 0116 8zM3 8a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h1.5A.75.75 0 013 8zm10.657-5.657a.75.75 0 010 1.061l-1.061 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zm-9.193 9.193a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 11-1.061-1.06l1.06-1.061a.75.75 0 011.061 0z', 'moon': 'M9.598 1.591a.75.75 0 01.785-.175 7 7 0 11-8.967 8.967.75.75 0 01.961-.96 5.5 5.5 0 007.046-7.046.75.75 0 01.175-.786zm1.616 1.945a7 7 0 01-7.678 7.678 5.5 5.5 0 107.678-7.678z', 'sync': 'M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z', 'home': 'M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z', 'github': 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z'};
+var utterancesLoad=0;
+
+let themeSettings={
+    "dark": ["dark","moon","#00f0ff","dark-blue"],
+    "light": ["light","sun","#ff5000","github-light"],
+    "auto": ["auto","sync","","preferred-color-scheme"]
+};
+function changeTheme(mode, icon, color, utheme){
+    document.documentElement.setAttribute("data-color-mode",mode);
+    document.getElementById("themeSwitch").setAttribute("d",value=IconList[icon]);
+    document.getElementById("themeSwitch").parentNode.style.color=color;
+    if(utterancesLoad==1){utterancesTheme(utheme);}
+}
+function modeSwitch(){
+    let currentMode=document.documentElement.getAttribute('data-color-mode');
+    let newMode = currentMode === "light" ? "dark" : currentMode === "dark" ? "auto" : "light";
+    localStorage.setItem("meek_theme", newMode);
+    if(themeSettings[newMode]){
+        changeTheme(...themeSettings[newMode]);
+    }
+}
+function utterancesTheme(theme){
+    const message={type:'set-theme',theme: theme};
+    const iframe=document.getElementsByClassName('utterances-frame')[0];
+    iframe.contentWindow.postMessage(message,'https://utteranc.es');
+}
+if(themeSettings[theme]){changeTheme(...themeSettings[theme]);}
+console.log("\n %c Gmeek last https://github.com/Meekdai/Gmeek \n","padding:5px 0;background:#02d81d;color:#fff");
+</script>
+
+<script>
+document.getElementById("pathHome").setAttribute("d",IconList["home"]);
+document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
+
+
+
+function openComments(){
+    cm=document.getElementById("comments");
+    cmButton=document.getElementById("cmButton");
+    cmButton.disabled=true;
+    cmButton.innerHTML="loading";
+    span=document.createElement("span");
+    span.setAttribute("class","AnimatedEllipsis");
+    cmButton.appendChild(span);
+
+    script=document.createElement("script");
+    script.setAttribute("src","https://utteranc.es/client.js");
+    script.setAttribute("repo","carolynwei/carolynwei.github.io");
+    script.setAttribute("issue-term","title");
+    
+    if(localStorage.getItem("meek_theme")=="dark"){script.setAttribute("theme","dark-blue");}
+    else if(localStorage.getItem("meek_theme")=="light") {script.setAttribute("theme","github-light");}
+    else{script.setAttribute("theme","preferred-color-scheme");}
+    
+    script.setAttribute("crossorigin","anonymous");
+    script.setAttribute("async","");
+    cm.appendChild(script);
+
+    int=self.setInterval("iFrameLoading()",200);
+}
+
+function iFrameLoading(){
+    var utterances=document.getElementsByClassName('utterances');
+    if(utterances.length==1){
+        if(utterances[0].style.height!=""){
+            utterancesLoad=1;
+            int=window.clearInterval(int);
+            document.getElementById("cmButton").style.display="none";
+            console.log("utterances Load OK");
+        }
+    }
+}
+
+
+
+</script>
+<script>MathJax = {tex: {inlineMath: [["$", "$"]]}};</script><script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</html>
