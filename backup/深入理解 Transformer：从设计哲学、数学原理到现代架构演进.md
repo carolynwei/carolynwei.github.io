@@ -72,6 +72,8 @@ Transformer 团队提出了一个更激进的问题：
 
 **创新不一定来自增加新的模块，也可能来自发现一个长期被认为必需的模块其实可以被删除。**
 
+---
+
 ## 2. 理解 Transformer 的统一框架：信息交互、特征变换与状态更新
 
 设输入序列表示为：
@@ -228,6 +230,8 @@ $$
 FFN 虽然没有直接跨 Token 交互，但它处理的输入已经可能包含前面 Attention 汇聚的上下文信息。
 
 这也是为什么它并不只是一个无关紧要的附加模块。
+
+---
 
 ## 3. Attention 的数学本质：Q、K、V 是如何完成信息检索的？
 
@@ -435,6 +439,8 @@ $$
 - $T$ 越小，分布通常越尖锐。
 
 Transformer 使用 $T=\sqrt{d_k}$ 控制注意力分数的尺度。
+
+---
 
 ## 4. 为什么需要 Multi-Head Attention？
 
@@ -792,7 +798,6 @@ $$
 
 ---
 
-
 ## 6. Positional Encoding：没有 RNN 后，模型如何理解顺序？
 
 ### 6.1 Self-Attention 为什么不能天然理解位置？
@@ -1078,6 +1083,7 @@ $$
 这是一种分析模型计算的视角，而不是对所有架构变体的严格定义。
 
 ---
+
 ## 8. FFN 的新解释：它可能是一种分布式 Key–Value Memory
 
 原论文将 FFN 描述为逐位置的前馈网络。
@@ -1422,7 +1428,6 @@ FlashAttention 使用：
 
 ---
 
-
 ## 13. 现代 Transformer 改进了哪些原始设计？
 
 Transformer 在成为主流基础架构后，很多组件都经历了重新设计。
@@ -1569,6 +1574,129 @@ $$
 
 ---
 
+## 15. 亲手验证：一个理解 Transformer 的 Anatomy Lab
+
+要真正理解上述思想，最有效的方法之一不是调用预训练模型，而是从零实现一个小型 Transformer，并系统地删除或替换组件。
+
+建议构建一个 `Transformer Anatomy Lab`。
+
+### 15.1 模型配置
+
+使用极小规模的 Encoder–Decoder：
+
+| 参数 | 建议配置 |
+|---|---:|
+| Encoder / Decoder 层数 | 2 / 2 |
+| $d_{\text{model}}$ | 64 |
+| Head 数量 | 4 |
+| $d_k=d_v$ | 16 |
+| $d_{ff}$ | 128 |
+| 词表大小 | 32 |
+| 序列长度 | 4–12 |
+| 位置编码 | Sinusoidal |
+| 归一化 | 首先采用 Post-LN |
+
+第一遍手写 Attention、Multi-Head、Mask、FFN、Residual 和 PE，不使用现成的 `nn.Transformer` 或 `nn.MultiheadAttention`。
+
+### 15.2 三个合成任务
+
+**任务 A：Sequence Reversal**
+
+```text
+Input:   3 8 1 6 4
+Output:  4 6 1 8 3
+```
+
+重点验证位置编码、Cross-Attention 与顺序建模。
+
+**任务 B：Key–Value Retrieval**
+
+```text
+Input:   A:7 B:2 C:9 | Query:B
+Output:  2
+```
+
+重点验证内容相关检索、Q/K/V 分工及多头机制。
+
+**任务 C：Autoregressive Generation**
+
+训练时使用 Shifted Right + Causal Mask，推理时逐 Token 生成。
+
+重点验证 Teacher Forcing、Mask 与实际生成之间的差异。
+
+### 15.3 最值得做的六组消融实验
+
+| 实验 | 理论问题 | 观察指标 |
+|---|---|---|
+| 删除 PE | 模型是否可以理解顺序？ | Exact Match、长度泛化 |
+| 删除 Causal Mask | 是否存在未来信息泄漏？ | Teacher-forced vs 自回归准确率 |
+| 删除缩放因子 | Logit 为什么需要尺度控制？ | 方差、Entropy、梯度 |
+| 单头 vs 多头 | 多头是否提供额外表示能力？ | 准确率、参数量、注意力图 |
+| 删除 FFN | Attention 自身是否足够？ | 收敛和最终表现 |
+| Post-LN vs Pre-LN | 归一化位置如何影响优化？ | 梯度范数、训练稳定性 |
+
+特别推荐三个实验。
+
+**实验一：无位置编码的 Sequence Reversal**
+
+利用排列等变性与 Cross-Attention 对 Key/Value 同步置换的不变性，可以说明在没有其他源序列顺序信息的条件下，标准模型无法普遍区分同一组 Token 的所有不同排列。
+
+这是可以先证明、再通过实验观察的结构性限制。
+
+**实验二：移除 Causal Mask**
+
+不使用 Mask 的 Decoder 可能在 Teacher Forcing 下得到很高准确率，却在真正自回归推理时表现明显下降。
+
+这是理解信息泄漏最直观的实验之一。
+
+**实验三：随机 Q/K 的缩放实验**
+
+设置：
+
+$$
+d_k\in\{8,32,128,512\}
+$$
+
+比较未缩放与缩放后的：
+
+- Logit 标准差。
+- Softmax 分布。
+- 注意力熵。
+- 相关梯度尺度。
+
+其中熵定义为：
+
+$$
+H(A_i)=-\sum_jA_{ij}\log A_{ij}
+$$
+
+这能够把 $\sqrt{d_k}$ 的理论推导变成可观察的数值实验。
+
+所有消融实验都应固定数据划分、训练预算和其他配置，最好使用多个随机种子。
+
+不能为了符合预期而筛选结果：某些模块在简单任务上可能是冗余的，理论上有效的机制也未必在所有训练配置下带来更高准确率。
+
+### 15.4 实验的真正目标
+
+不应该只要求模型的 Loss 下降，而应当形成：
+
+$$
+\boxed{
+\text{理论假设}
+\rightarrow
+\text{可检验预测}
+\rightarrow
+\text{控制变量实验}
+\rightarrow
+\text{观察结果}
+\rightarrow
+\text{机制解释}
+}
+$$
+
+这比完成一个普通的文本生成 Demo 更接近真实科研过程。
+
+---
 
 ## 15. 回到根本：Transformer 的核心究竟是什么？
 
